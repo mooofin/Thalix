@@ -1,6 +1,6 @@
 # EldenRingStutterFix
 
-![Elden Ring Stutter Fix](assests/image.jpg)
+
 
 ## Overview
 **EldenRingStutterFix** is a simple mod that improves **Elden Ring**'s performance by automatically adjusting CPU affinity settings. It prevents the game from overloading **CPU Core 0**, which is primarily responsible for handling system tasks, resulting in smoother gameplay and reduced stuttering.
