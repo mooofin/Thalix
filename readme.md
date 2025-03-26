@@ -1,4 +1,5 @@
 # EldenRingStutterFix
+![Elden Ring Panorama](assets/image1.jpg)
 
 
 
