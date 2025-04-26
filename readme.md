@@ -1,6 +1,6 @@
 # EldenRingStutterFix
-![Elden Ring Panorama](assets/image1.jpg)
 
+![image](https://github.com/user-attachments/assets/36666758-d174-4658-97a3-7fd8d18e4690)
 
 
 ## Overview
