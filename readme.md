@@ -1,6 +1,8 @@
 # EldenRingStutterFix
 
-![image](https://github.com/user-attachments/assets/36666758-d174-4658-97a3-7fd8d18e4690)
+![image](https://github.com/user-attachments/assets/844ab760-4925-4e0c-a881-a503b6506393)
+
+
 
 
 ## Overview
