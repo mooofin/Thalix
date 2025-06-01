@@ -3,7 +3,6 @@ import time
 import ctypes
 
 def is_admin():
-    """Check if the script is running with admin privileges."""
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
     except:
@@ -16,7 +15,7 @@ def set_affinity(process_name):
                 p = psutil.Process(process.info['pid'])
                 available_cpus = list(range(psutil.cpu_count()))
                 if 0 in available_cpus:
-                    available_cpus.remove(0)  # Remove CPU 0
+                    available_cpus.remove(0)
                 p.cpu_affinity(available_cpus)
                 print(f"Affinity set for {process_name}: {available_cpus}")
                 return
@@ -35,4 +34,4 @@ if __name__ == "__main__":
     print("Waiting for Elden Ring to start...")
     while True:
         set_affinity(game_process)
-        time.sleep(5)  
+        time.sleep(5)
