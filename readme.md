@@ -2,7 +2,7 @@
 
 A high-performance process management and memory editing toolkit for eliminating game stuttering.
 
-## T DPC Latency
+## what the heck is  DPC Latency ??
 
 DPC (Deferred Procedure Call) latency occurs when kernel routines take too long to execute, causing visible micro-stutters in games. When a game's rendering thread runs on Core 0 alongside high-priority system processes, DPC spikes starve the thread of CPU time even brief pauses of microseconds cause noticeable frame-time spikes.
 
