@@ -1,0 +1,39 @@
+# Ignore everything by default
+*
+
+# Allow specific files and directories
+!.gitignore
+!readme.md
+!src/
+!src/thalix_gui.py
+!src/memory_editor.py
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# PyInstaller
+*.spec
+
+# Environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

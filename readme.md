@@ -1,41 +1,31 @@
-# Elden Ring Stutter Fix GUI
+# Thalix
 
-An application for fixing Elden Ring stuttering issues through CPU affinity management.
+A high-performance process management and memory editing toolkit for eliminating game stuttering.
 
+## The Problem: DPC Latency
 
-## Quick Start
+DPC (Deferred Procedure Call) latency occurs when kernel routines take too long to execute, causing visible micro-stutters in games. When a game's rendering thread runs on Core 0 alongside high-priority system processes, DPC spikes starve the thread of CPU time even brief pauses of microseconds cause noticeable frame-time spikes.
 
-### 1. Install Requirements
-```bash
-pip install -r requirements.txt
-```
+**Common causes:**
+- Inefficient device drivers
+- Excessive I/O activity  
+- Conflicts with high-priority processes
 
+## The Solution
 
-### 3. Run the Application
-```bash
-# Run as Administrator for full functionality
-python run_gui.py
+Thalix isolates game processes to dedicated CPU cores, away from system interrupts and DPC activity. This technique, a staple of real-time computing, ensures consistent frame times by preventing thread starvation.
 
-# Or use the batch file (Windows)
-run_gui.bat
-```
-
-
-
+**Features:**
+- CPU affinity management with per-core monitoring
+- Process priority control
+- Built-in memory editor with cheat table support
+- Real-time performance statistics
+- Configuration presets
 
 ## Usage
 
-1. **Start as Administrator**: Required for CPU affinity modification
-2. **Select Target Process**: Enter process name or select from live list
-3. **Choose CPU Cores**: Select which cores to use for the process
-4. **Apply Settings**: Click "APPLY CPU AFFINITY" for immediate application
-5. **Auto-Monitor**: Use "START MONITORING" to watch for process startup
+```bash
+python run_gui.py
+```
 
-
-## License
-
-This project is for educational and personal use. Elden Ring is a trademark of FromSoftware and Bandai Namco Entertainment.
-
----
-
-*May your frames be smooth and your stutters be gone!* (V cheesy ik )
+Requires Python 3.8+ with CustomTkinter, psutil, and Pillow.

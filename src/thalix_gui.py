@@ -9,7 +9,6 @@ from PIL import Image, ImageTk
 import os
 import sys
 
-# Import memory editor module
 try:
     from memory_editor import MemoryEditor, CheatTable, MemoryFreezer
 except ImportError:
@@ -18,15 +17,15 @@ except ImportError:
     CheatTable = None
     MemoryFreezer = None
 
-class EldenRingStutterFixGUI:
+class ThalixGUI:
     def __init__(self):
-        # Set up the main window
+        
         self.root = ctk.CTk()
-        self.root.title("Elden Ring Stutter Fix")
+        self.root.title("Thalix")
         self.root.geometry("1000x800")
         self.root.configure(fg_color=("#0a0a0a", "#0a0a0a"))
         
-        # Try to set window icon
+    
         try:
             icon_paths = [
                 os.path.join("assets", "app_icon.ico"),
@@ -44,7 +43,7 @@ class EldenRingStutterFixGUI:
                     try:
                         if icon_path.endswith('.ico'):
                             self.root.iconbitmap(icon_path)
-                            print(f"✅ Window icon loaded from: {icon_path}")
+                            print(f"Window icon loaded from: {icon_path}")
                             icon_loaded = True
                             break
                         else:
@@ -55,7 +54,7 @@ class EldenRingStutterFixGUI:
                             img.save(temp_icon)
                             self.root.iconbitmap(temp_icon)
                             os.remove(temp_icon)
-                            print(f"✅ Window icon loaded from: {icon_path}")
+                            print(f"Window icon loaded from: {icon_path}")
                             icon_loaded = True
                             break
                     except Exception as e:
@@ -63,11 +62,11 @@ class EldenRingStutterFixGUI:
                         continue
             
             if not icon_loaded:
-                print("❌ No suitable icon found")
+                print("No suitable icon found")
                 print("Available files:", [f for f in os.listdir("assets") if f.endswith(('.ico', '.png', '.jpg'))])
                 
         except Exception as e:
-            print(f"❌ Could not load window icon: {e}")
+            print(f"Could not load window icon: {e}")
             import traceback
             traceback.print_exc()
         
@@ -220,7 +219,7 @@ class EldenRingStutterFixGUI:
         # Title with Elden Ring styling - Medieval font
         title_label = ctk.CTkLabel(
             header_frame, 
-            text="⚔ ELDEN RING STUTTER FIX ⚔",
+            text="THALIX",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=32, weight="bold"),
             text_color=self.colors['primary']
         )
@@ -239,7 +238,7 @@ class EldenRingStutterFixGUI:
         cpu_freq = psutil.cpu_freq()
         mem = psutil.virtual_memory()
         
-        sys_info_text = f"⚡ {cpu_count} Cores | 🔥 {cpu_freq.current:.0f}MHz | 💾 {mem.percent:.1f}% RAM"
+        sys_info_text = f"{cpu_count} Cores | {cpu_freq.current:.0f}MHz | {mem.percent:.1f}% RAM"
         
         self.sys_info_label = ctk.CTkLabel(
             sys_info_frame,
@@ -311,7 +310,7 @@ class EldenRingStutterFixGUI:
         
         ctk.CTkLabel(
             input_frame,
-            text="⚡ TARGET PROCESS",
+            text="TARGET PROCESS",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
@@ -368,7 +367,7 @@ class EldenRingStutterFixGUI:
         
         ctk.CTkLabel(
             info_frame,
-            text="📜 PROCESS INFORMATION",
+            text="PROCESS INFORMATION",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
@@ -395,7 +394,7 @@ class EldenRingStutterFixGUI:
         
         ctk.CTkLabel(
             list_frame,
-            text="⚔ RUNNING PROCESSES",
+            text="RUNNING PROCESSES",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
@@ -404,7 +403,7 @@ class EldenRingStutterFixGUI:
         self.search_entry = ctk.CTkEntry(
             list_frame,
             textvariable=self.search_var,
-            placeholder_text="🔍 Search processes...",
+            placeholder_text="Search processes...",
             font=ctk.CTkFont(size=12),
             height=30,
             border_width=2,
@@ -441,7 +440,7 @@ class EldenRingStutterFixGUI:
         # Refresh button with Elden Ring styling
         refresh_btn = ctk.CTkButton(
             list_frame,
-            text="🔄 REFRESH PROCESS LIST",
+            text="REFRESH PROCESS LIST",
             command=self.refresh_process_list,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=12, weight="bold"),
             height=35,
@@ -476,7 +475,7 @@ class EldenRingStutterFixGUI:
         
         ctk.CTkLabel(
             selection_frame,
-            text="🔥 CPU CORE SELECTION",
+            text="CPU CORE SELECTION",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
@@ -559,7 +558,7 @@ class EldenRingStutterFixGUI:
             
             checkbox = ctk.CTkCheckBox(
                 cpu_frame,
-                text=f"⚡ Core {i}",
+                text=f"Core {i}",
                 variable=var,
                 font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
                 text_color=self.colors['text'],
@@ -600,7 +599,7 @@ class EldenRingStutterFixGUI:
         # Apply button with Elden Ring styling
         self.apply_button = ctk.CTkButton(
             footer_frame,
-            text="⚔️ APPLY AFFINITY",
+            text="APPLY AFFINITY",
             command=self.apply_affinity_and_priority,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
             height=50,
@@ -615,7 +614,7 @@ class EldenRingStutterFixGUI:
         # Monitor button with Elden Ring styling
         self.monitor_button = ctk.CTkButton(
             footer_frame,
-            text="👁️ START MONITORING",
+            text="START MONITORING",
             command=self.toggle_monitoring,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
             height=50,
@@ -630,7 +629,7 @@ class EldenRingStutterFixGUI:
         # Save Preset button
         save_preset_button = ctk.CTkButton(
             footer_frame,
-            text="💾 SAVE PRESET",
+            text="SAVE PRESET",
             command=self.save_preset,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
             height=50,
@@ -645,7 +644,7 @@ class EldenRingStutterFixGUI:
         # Settings button with Elden Ring styling
         settings_button = ctk.CTkButton(
             footer_frame,
-            text="⚙️ SETTINGS",
+            text="SETTINGS",
             command=self.open_settings,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
             height=50,
@@ -660,7 +659,7 @@ class EldenRingStutterFixGUI:
         # Load Preset button (second row)
         load_preset_button = ctk.CTkButton(
             footer_frame,
-            text="📂 LOAD PRESET",
+            text="LOAD PRESET",
             command=self.load_preset,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
             height=40,
@@ -675,7 +674,7 @@ class EldenRingStutterFixGUI:
         # Performance Stats button
         stats_button = ctk.CTkButton(
             footer_frame,
-            text="📊 PERFORMANCE STATS",
+            text="PERFORMANCE STATS",
             command=self.show_performance_stats,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
             height=40,
@@ -690,7 +689,7 @@ class EldenRingStutterFixGUI:
         # Memory Editor button (NEW!)
         memory_button = ctk.CTkButton(
             footer_frame,
-            text="🧠 MEMORY EDITOR",
+            text="MEMORY EDITOR",
             command=self.open_memory_editor,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
             height=40,
@@ -1102,7 +1101,7 @@ class EldenRingStutterFixGUI:
         
         ctk.CTkLabel(
             main_frame,
-            text="⚔️ SYSTEM PERFORMANCE ⚔️",
+            text="SYSTEM PERFORMANCE",
             font=ctk.CTkFont(size=24, weight="bold"),
             text_color=self.colors['primary']
         ).pack(pady=20)
@@ -1193,7 +1192,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkLabel(
             main_frame,
-            text="ELDEN RING STUTTER FIX SETTINGS",
+            text="THALIX SETTINGS",
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color=self.colors['primary']
         ).pack(pady=30)
@@ -1287,7 +1286,7 @@ Percentage: {disk.percent}%
             
         # Create memory editor window
         mem_window = ctk.CTkToplevel(self.root)
-        mem_window.title(f"🧠 Memory Editor - {process_name}")
+        mem_window.title(f"Memory Editor - {process_name}")
         mem_window.geometry("1200x700")
         mem_window.configure(fg_color=self.colors['background'])
         
@@ -1319,7 +1318,7 @@ Percentage: {disk.percent}%
         # Title
         ctk.CTkLabel(
             main_frame,
-            text=f"⚔️ MEMORY EDITOR - {process_name} ⚔️",
+            text=f"MEMORY EDITOR - {process_name}",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=24, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, columnspan=2, pady=20)
@@ -1336,7 +1335,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkLabel(
             scanner_frame,
-            text="🔍 MEMORY SCANNER",
+            text="MEMORY SCANNER",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).pack(pady=15)
@@ -1452,7 +1451,7 @@ Percentage: {disk.percent}%
         # Scan button
         ctk.CTkButton(
             scanner_frame,
-            text="🔎 FIRST SCAN",
+            text="FIRST SCAN",
             command=perform_scan,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
             fg_color=self.colors['success'],
@@ -1474,7 +1473,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkLabel(
             table_frame,
-            text="📜 CHEAT TABLE",
+            text="CHEAT TABLE",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, pady=15)
@@ -1654,7 +1653,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkButton(
             button_frame,
-            text="➕ Add",
+            text="Add",
             command=add_address_to_table,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
             fg_color=self.colors['success'],
@@ -1663,7 +1662,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkButton(
             button_frame,
-            text="✏️ Modify",
+            text="Modify",
             command=modify_value,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
             fg_color=self.colors['warning'],
@@ -1672,7 +1671,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkButton(
             button_frame,
-            text="❄️ Freeze",
+            text="Freeze",
             command=toggle_freeze,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
             fg_color="#00CED1",
@@ -1681,7 +1680,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkButton(
             button_frame,
-            text="💾 Save",
+            text="Save",
             command=save_table,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
             fg_color=self.colors['primary'],
@@ -1690,7 +1689,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkButton(
             button_frame,
-            text="📂 Load",
+            text="Load",
             command=load_table,
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
             fg_color=self.colors['secondary'],
@@ -1708,7 +1707,7 @@ Percentage: {disk.percent}%
         # Warning label
         warning_label = ctk.CTkLabel(
             main_frame,
-            text="⚠️ WARNING: Use only in single-player! Memory editing may violate game ToS ⚠️",
+            text="WARNING: Use only in single-player! Memory editing may violate game ToS",
             font=ctk.CTkFont(size=11, weight="bold"),
             text_color=self.colors['error']
         )
@@ -1734,7 +1733,7 @@ Percentage: {disk.percent}%
 
 def main():
     """Main entry point"""
-    app = EldenRingStutterFixGUI()
+    app = ThalixGUI()
     app.run()
 
 if __name__ == "__main__":
