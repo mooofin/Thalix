@@ -4,15 +4,24 @@
 # Allow specific files and directories
 !.gitignore
 !readme.md
+!requirements.txt
+!*.bat
+
+# Allow src directory and Python files
 !src/
-!src/thalix_gui.py
-!src/memory_editor.py
+!src/*.py
+!src/**/*.py
+
+# Ignore Python cache even in allowed directories
+src/__pycache__/
+**/__pycache__/
 
 # Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.pyc
 
 # Distribution / packaging
 build/
@@ -37,3 +46,20 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+thalix.log
+
+# Temporary files
+temp_icon.ico
+*.tmp
+
+# User-specific files (cheat tables from users)
+# Note: Keep example presets but ignore user downloads
+Downloads/
+*.CT
+
+# Test files
+test_*.py
+*_test.py
