@@ -111,16 +111,16 @@ def build_executable():
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
-            print("✅ Executable built successfully!")
-            print("📁 Output: dist/EldenRingStutterFix.exe")
+            print(" Executable built successfully!")
+            print(" Output: dist/EldenRingStutterFix.exe")
             return True
         else:
-            print("❌ Error building executable:")
+            print(" Error building executable:")
             print(result.stderr)
             return False
             
     except Exception as e:
-        print(f"❌ Error during build: {e}")
+        print(f" Error during build: {e}")
         return False
 
 def create_installer_script():
@@ -144,15 +144,15 @@ if exist "%exe_path%" (
     echo Creating desktop shortcut...
     powershell "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%desktop%\\Elden Ring Stutter Fix.lnk'); $Shortcut.TargetPath = '%exe_path%'; $Shortcut.Save()"
     echo.
-    echo ✅ Installation complete!
-    echo 📁 Desktop shortcut created
+    echo  Installation complete!
+    echo  Desktop shortcut created
     echo.
     echo To run: Double-click "Elden Ring Stutter Fix" on your desktop
     echo.
-    echo ⚠️  IMPORTANT: Right-click and "Run as administrator" for full functionality
+    echo   IMPORTANT: Right-click and "Run as administrator" for full functionality
     echo.
 ) else (
-    echo ❌ Executable not found. Please run build_exe.py first.
+    echo  Executable not found. Please run build_exe.py first.
 )
 
 pause
@@ -171,13 +171,13 @@ def main():
     
     # Check if assets exist
     if not os.path.exists("assets"):
-        print("❌ Assets folder not found!")
+        print(" Assets folder not found!")
         print("Please make sure you have the assets folder with your images.")
         return
     
     # Install PyInstaller
     if not install_pyinstaller():
-        print("❌ Could not install PyInstaller")
+        print(" Could not install PyInstaller")
         return
     
     # Create spec file
@@ -186,24 +186,24 @@ def main():
     # Build executable
     if build_executable():
         print()
-        print("🎉 Build completed successfully!")
+        print(" Build completed successfully!")
         print()
-        print("📁 Files created:")
+        print(" Files created:")
         print("   - dist/EldenRingStutterFix.exe (Main executable)")
         print("   - install.bat (Installer script)")
         print()
-        print("🚀 To install:")
+        print(" To install:")
         print("   1. Run install.bat to create desktop shortcut")
         print("   2. Right-click the shortcut and 'Run as administrator'")
         print()
-        print("⚠️  Note: The executable includes all assets and dependencies")
+        print("  Note: The executable includes all assets and dependencies")
         print("   No additional installation required!")
         
         # Create installer
         create_installer_script()
         
     else:
-        print("❌ Build failed. Check the error messages above.")
+        print(" Build failed. Check the error messages above.")
 
 if __name__ == "__main__":
     main()
