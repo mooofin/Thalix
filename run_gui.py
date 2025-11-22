@@ -1,19 +1,16 @@
-#!/usr/bin/env python3
 """
-Elden Ring Stutter Fix GUI Launcher
-A cute and modern GUI application for managing CPU affinity
+Thalix - Process Management and Memory Editing Toolkit
 """
 
 import sys
 import os
 
-# Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 try:
-    from elden_ring_gui import main
+    from thalix_gui import main
     if __name__ == "__main__":
-        print("Starting Elden Ring Stutter Fix GUI...")
+        print("Starting Thalix...")
         main()
 except ImportError as e:
     print(f"Error importing required modules: {e}")

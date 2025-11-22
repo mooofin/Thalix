@@ -1,9 +1,9 @@
-# -*- mode: python ; coding: utf-8 -*-
+
 
 block_cipher = None
 
 a = Analysis(
-    ['src/elden_ring_gui.py'],
+    ['src/thalix_gui.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -36,7 +36,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='EldenRingStutterFix',
+    name='Thalix',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

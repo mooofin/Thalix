@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Asset setup script for Elden Ring Stutter Fix GUI
 This script helps set up the background image and icon from your Elden Ring images
@@ -12,13 +11,11 @@ def setup_assets():
     """Set up the assets for the Elden Ring GUI"""
     print("Setting up Elden Ring assets...")
     
-    # Create assets directory if it doesn't exist
     assets_dir = "assets"
     if not os.path.exists(assets_dir):
         os.makedirs(assets_dir)
         print(f"Created {assets_dir} directory")
     
-    # Instructions for the user
     print("\n" + "="*60)
     print("ELDEN RING ASSET SETUP")
     print("="*60)

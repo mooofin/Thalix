@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Icon creation script for Elden Ring Stutter Fix GUI
 Creates proper icon files from your Elden Ring images
@@ -11,12 +10,10 @@ def create_icon():
     """Create icon files from Elden Ring images"""
     assets_dir = "assets"
     
-    # Check if assets directory exists
     if not os.path.exists(assets_dir):
         print("Assets directory not found!")
         return
     
-    # List available images
     print("Available images in assets folder:")
     for file in os.listdir(assets_dir):
         if file.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -24,11 +21,9 @@ def create_icon():
     
     print("\nCreating icon files...")
     
-    # Try to create icon from elden_ring_icon.jpg
     icon_source = os.path.join(assets_dir, "elden_ring_icon.jpg")
     if os.path.exists(icon_source):
         try:
-            # Create different icon sizes
             sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
             
             for size in sizes:
@@ -38,7 +33,6 @@ def create_icon():
                 img.save(icon_path)
                 print(f"Created: {icon_path}")
             
-            # Create main icon
             img = Image.open(icon_source)
             img = img.resize((256, 256), Image.Resampling.LANCZOS)
             main_icon = os.path.join(assets_dir, "app_icon.ico")
@@ -50,12 +44,10 @@ def create_icon():
     else:
         print(f"Icon source not found: {icon_source}")
     
-    # Try to create background from elden_ring_bg.jpg
     bg_source = os.path.join(assets_dir, "elden_ring_bg.jpg")
     if os.path.exists(bg_source):
         try:
             img = Image.open(bg_source)
-            # Create a smaller version for the GUI
             img_small = img.resize((1000, 800), Image.Resampling.LANCZOS)
             bg_optimized = os.path.join(assets_dir, "elden_ring_bg_optimized.jpg")
             img_small.save(bg_optimized, quality=85)
@@ -72,11 +64,9 @@ def setup_window_icon():
         import tkinter as tk
         from PIL import ImageTk
         
-        # Create a simple test window to set icon
         root = tk.Tk()
         root.title("Elden Ring Stutter Fix")
         
-        # Try to set icon
         icon_path = os.path.join("assets", "app_icon.ico")
         if os.path.exists(icon_path):
             root.iconbitmap(icon_path)

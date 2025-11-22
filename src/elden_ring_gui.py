@@ -8,64 +8,25 @@ import time
 from PIL import Image, ImageTk
 import os
 import sys
-import logging
-from typing import Optional, List
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('thalix.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
-
+# Import memory editor module
 try:
     from memory_editor import MemoryEditor, CheatTable, MemoryFreezer
-    from cheat_engine_integration import CheatEngineIntegration, CheatEngineTable
-except ImportError as e:
-    logger.warning(f"Memory editor module not available: {e}")
+except ImportError:
+    print("Memory editor module not available")
     MemoryEditor = None
     CheatTable = None
     MemoryFreezer = None
-    CheatEngineIntegration = None
-    CheatEngineTable = None
 
-
-# Error messages
-class Messages:
-    """Centralized error and status messages"""
-    PROCESS_NOT_FOUND = "Process '{}' not found"
-    ACCESS_DENIED = "Access denied - Administrator privileges required"
-    NO_PROCESS_NAME = "Please enter a process name"
-    NO_CPUS_SELECTED = "Please select at least one CPU core"
-    AFFINITY_APPLIED = "CPU affinity set for '{}': {}"
-    PROCESS_TERMINATED = "Process not found or terminated"
-    MONITORING_STARTED = "Monitoring for '{}'..."
-    MONITORING_STOPPED = "Monitoring stopped"
-    
-    @staticmethod
-    def format_error(exception: Exception) -> str:
-        """Format exception as user-friendly message"""
-        return f"Operation failed: {type(exception).__name__} - {exception}"
-
-
-class ThalixGUI:
+class EldenRingStutterFixGUI:
     def __init__(self):
-        logger.info("Initializing Thalix GUI")
-        
+        # Set up the main window
         self.root = ctk.CTk()
-        self.root.title("Thalix - Multi-Game Performance Toolkit")
-        self.root.geometry("1200x900")
-        self.root.minsize(1000, 700)
+        self.root.title("Tokios")
+        self.root.geometry("1000x800")
         self.root.configure(fg_color=("#0a0a0a", "#0a0a0a"))
         
-        # Thread synchronization
-        self._monitor_lock = threading.Lock()
-        self._monitoring = False
-    
+        # Try to set window icon
         try:
             icon_paths = [
                 os.path.join("assets", "app_icon.ico"),
@@ -83,7 +44,7 @@ class ThalixGUI:
                     try:
                         if icon_path.endswith('.ico'):
                             self.root.iconbitmap(icon_path)
-                            logger.info(f"Window icon loaded from: {icon_path}")
+                            print(f"Window icon loaded from: {icon_path}")
                             icon_loaded = True
                             break
                         else:
@@ -94,49 +55,29 @@ class ThalixGUI:
                             img.save(temp_icon)
                             self.root.iconbitmap(temp_icon)
                             os.remove(temp_icon)
-                            logger.info(f"Window icon loaded from: {icon_path}")
+                            print(f"Window icon loaded from: {icon_path}")
                             icon_loaded = True
                             break
                     except Exception as e:
-                        logger.warning(f"Failed to load icon from {icon_path}: {e}")
+                        print(f"Failed to load icon from {icon_path}: {e}")
                         continue
             
             if not icon_loaded:
-                logger.warning("No suitable icon found")
+                print("No suitable icon found")
+                print("Available files:", [f for f in os.listdir("assets") if f.endswith(('.ico', '.png', '.jpg'))])
                 
         except Exception as e:
-            logger.error(f"Could not load window icon: {e}")
+            print(f"Could not load window icon: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Configure grid weights
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
         
         # Initialize variables
+        self.monitoring = False
         self.monitor_thread = None
-        
-        # Game profiles with preset configurations
-        self.game_profiles = {
-            'Elden Ring': {
-                'process': 'eldenring.exe',
-                'cheat_table': 'presets/eldenring_cheats.json',
-                'recommended_cores': 'performance',  # Use performance cores
-                'description': 'Elden Ring - Open World Action RPG'
-            },
-            'Dark Souls Remastered': {
-                'process': 'DarkSoulsRemastered.exe',
-                'cheat_table': 'presets/darksouls_cheats.json',
-                'recommended_cores': 'performance',
-                'description': 'Dark Souls Remastered - Classic Action RPG'
-            },
-            'Custom': {
-                'process': '',
-                'cheat_table': None,
-                'recommended_cores': 'all',
-                'description': 'Custom process configuration'
-            }
-        }
-        
-        self.current_game = tk.StringVar(value="Elden Ring")
         self.process_name = tk.StringVar(value="eldenring.exe")
         self.selected_cpus = []
         self.cpu_vars = []
@@ -150,9 +91,6 @@ class ThalixGUI:
         self.memory_editor = None
         self.cheat_table = CheatTable() if CheatTable else None
         self.memory_freezer = None
-        self.loaded_cheat_entries = []  # Track loaded cheat table entries
-        self.ce_integration = None  # Cheat Engine integration
-        self.loaded_ct_file = None  # Currently loaded .ct file path
         
         # Elden Ring Color Scheme (semi-transparent look)
         self.colors = {
@@ -160,47 +98,31 @@ class ThalixGUI:
             'secondary': '#8B4513',      # Saddle Brown
             'accent': '#DC143C',         # Crimson Red
             'background': '#1a1a1a',     # Dark Charcoal
-            'surface': '#2d2d2d',        # Dark Gray
-            'surface_light': '#3d3d3d',  # Lighter Gray
-            'text': '#E0E0E0',           # Light Gray
-            'text_secondary': '#A0A0A0', # Medium Gray
-            'border': '#4a4a4a',         # Border Gray
+            'surface': '#2d2d2d',        # Dark Gray (will use low opacity via fg_color_transparency)
+            'surface_light': '#3a3a3a',  # Lighter Gray
+            'text': '#FFFFFF',           # White text for better contrast
+            'text_secondary': '#E6E6E6', # Light Gray
             'success': '#4CAF50',        # Green
             'warning': '#FF9800',        # Orange
-            'error': '#F44336'           # Red
+            'error': '#F44336',          # Red
+            'border': '#C9A96E',         # Gold Border
+            'shadow': '#000000'          # Black Shadow
         }
         
         # Set custom theme
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
         
-        # Create widgets
         self.create_widgets()
         self.check_admin_privileges()
-    
-    @property
-    def monitoring(self) -> bool:
-        """Thread-safe monitoring state getter"""
-        with self._monitor_lock:
-            return self._monitoring
-    
-    @monitoring.setter
-    def monitoring(self, value: bool):
-        """Thread-safe monitoring state setter"""
-        with self._monitor_lock:
-            self._monitoring = value
         
     def create_widgets(self):
         """Create and arrange all GUI widgets with Elden Ring theming"""
-        # Main scrollable container
-        self.main_frame = ctk.CTkScrollableFrame(
-            self.root, 
-            fg_color="transparent",
-            scrollbar_button_color=self.colors['primary'],
-            scrollbar_button_hover_color=self.colors['secondary']
-        )
+        # Main container with background
+        self.main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.main_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.main_frame.grid_columnconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(0, weight=1)
         
         # Create background
         self.create_background()
@@ -216,11 +138,11 @@ class ThalixGUI:
         
     def create_background(self):
         """Create the Elden Ring background"""
-        # Background frame (non-scrolling)
+        # Background frame
         self.bg_frame = ctk.CTkFrame(self.main_frame, fg_color="#0a0a0a")
         self.bg_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.bg_frame.grid_columnconfigure(0, weight=1)
-        self.bg_frame.grid_rowconfigure((0, 1, 2), weight=0)
+        self.bg_frame.grid_rowconfigure(0, weight=1)
         
         # Try to load background image
         try:
@@ -271,14 +193,17 @@ class ThalixGUI:
                         bg="#0a0a0a"
                     )
                     self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-                    logger.info(f"Background image loaded successfully from: {bg_path}")
+                    print(f"✅ Background image loaded successfully from: {bg_path}")
                     bg_loaded = True
                     break
             
             if not bg_loaded:
-                logger.warning("No background image found in assets folder")
+                print("❌ No background image found in assets folder")
+                print("Available files:", os.listdir("assets"))
         except Exception as e:
-            logger.error(f"Could not load background image: {e}")
+            print(f"❌ Could not load background image: {e}")
+            import traceback
+            traceback.print_exc()
         
     def create_header(self):
         """Create the header section with Elden Ring styling"""
@@ -295,7 +220,7 @@ class ThalixGUI:
         # Title with Elden Ring styling - Medieval font
         title_label = ctk.CTkLabel(
             header_frame, 
-            text="THALIX",
+            text="TOKIOS",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=32, weight="bold"),
             text_color=self.colors['primary']
         )
@@ -373,49 +298,7 @@ class ThalixGUI:
         )
         process_frame.grid(row=0, column=0, padx=(20, 10), pady=20, sticky="nsew")
         process_frame.grid_columnconfigure(0, weight=1)
-        process_frame.grid_rowconfigure(3, weight=1)
-        
-        # Game profile selector
-        game_select_frame = ctk.CTkFrame(
-            process_frame,
-            fg_color=self.colors['background'],
-            corner_radius=8
-        )
-        game_select_frame.grid(row=0, column=0, padx=15, pady=(15, 10), sticky="ew")
-        game_select_frame.grid_columnconfigure(1, weight=1)
-        
-        ctk.CTkLabel(
-            game_select_frame,
-            text="GAME PROFILE",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
-            text_color=self.colors['primary']
-        ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
-        
-        # Game dropdown
-        self.game_dropdown = ctk.CTkOptionMenu(
-            game_select_frame,
-            variable=self.current_game,
-            values=list(self.game_profiles.keys()),
-            command=self.on_game_profile_change,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
-            dropdown_font=ctk.CTkFont(size=12),
-            height=40,
-            fg_color=self.colors['primary'],
-            button_color=self.colors['secondary'],
-            button_hover_color=self.colors['accent'],
-            dropdown_fg_color=self.colors['surface'],
-            dropdown_hover_color=self.colors['surface_light']
-        )
-        self.game_dropdown.grid(row=1, column=0, columnspan=2, padx=20, pady=(0, 10), sticky="ew")
-        
-        # Game description label
-        self.game_desc_label = ctk.CTkLabel(
-            game_select_frame,
-            text=self.game_profiles['Elden Ring']['description'],
-            font=ctk.CTkFont(size=11, slant="italic"),
-            text_color=self.colors['text_secondary']
-        )
-        self.game_desc_label.grid(row=2, column=0, columnspan=2, padx=20, pady=(0, 15), sticky="w")
+        process_frame.grid_rowconfigure(2, weight=1)
         
         # Process input section
         input_frame = ctk.CTkFrame(
@@ -423,7 +306,7 @@ class ThalixGUI:
             fg_color=self.colors['background'],
             corner_radius=8
         )
-        input_frame.grid(row=1, column=0, padx=15, pady=(10, 10), sticky="ew")
+        input_frame.grid(row=0, column=0, padx=15, pady=(15, 10), sticky="ew")
         input_frame.grid_columnconfigure(0, weight=1)
         
         ctk.CTkLabel(
@@ -480,7 +363,7 @@ class ThalixGUI:
             fg_color=self.colors['background'],
             corner_radius=8
         )
-        info_frame.grid(row=2, column=0, padx=15, pady=(0, 10), sticky="ew")
+        info_frame.grid(row=1, column=0, padx=15, pady=(0, 10), sticky="ew")
         info_frame.grid_columnconfigure(0, weight=1)
         
         ctk.CTkLabel(
@@ -506,7 +389,7 @@ class ThalixGUI:
             fg_color=self.colors['background'],
             corner_radius=8
         )
-        list_frame.grid(row=3, column=0, padx=15, pady=0, sticky="nsew")
+        list_frame.grid(row=2, column=0, padx=15, pady=0, sticky="nsew")
         list_frame.grid_columnconfigure(0, weight=1)
         list_frame.grid_rowconfigure(2, weight=1)
         
@@ -539,7 +422,7 @@ class ThalixGUI:
             selectbackground=self.colors['primary'],
             selectforeground="#000000",
             font=("Consolas", 11),
-            height=12,  # Increased height for better visibility
+            height=8,
             border=0,
             highlightthickness=0,
             relief="flat"
@@ -601,11 +484,9 @@ class ThalixGUI:
         # CPU checkboxes container
         self.cpu_container = ctk.CTkScrollableFrame(
             cpu_frame, 
-            height=400,  # Increased height for better visibility
+            height=200,
             fg_color=self.colors['background'],
-            corner_radius=8,
-            scrollbar_button_color=self.colors['primary'],
-            scrollbar_button_hover_color=self.colors['secondary']
+            corner_radius=8
         )
         self.cpu_container.grid(row=1, column=0, padx=15, pady=0, sticky="nsew")
         self.cpu_container.grid_columnconfigure(0, weight=1)
@@ -713,7 +594,7 @@ class ThalixGUI:
             border_color=self.colors['border']
         )
         footer_frame.grid(row=2, column=0, padx=20, pady=(10, 20), sticky="ew")
-        footer_frame.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+        footer_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
         footer_frame.grid_rowconfigure((0, 1), weight=1)
         
         # Apply button with Elden Ring styling
@@ -806,22 +687,7 @@ class ThalixGUI:
         )
         stats_button.grid(row=1, column=2, padx=(8, 4), pady=(8, 25), sticky="ew")
         
-        # Load Cheat Table button (NEW!)
-        load_ct_button = ctk.CTkButton(
-            footer_frame,
-            text="LOAD CHEAT TABLE",
-            command=self.load_cheat_table_file,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
-            height=40,
-            fg_color="#4B0082",  # Indigo for cheat tools
-            hover_color="#6A0DAD",
-            border_width=2,
-            border_color=self.colors['border'],
-            corner_radius=10
-        )
-        load_ct_button.grid(row=1, column=3, padx=(4, 4), pady=(8, 25), sticky="ew")
-        
-        # Memory Editor button
+        # Memory Editor button (NEW!)
         memory_button = ctk.CTkButton(
             footer_frame,
             text="MEMORY EDITOR",
@@ -834,7 +700,7 @@ class ThalixGUI:
             border_color=self.colors['border'],
             corner_radius=10
         )
-        memory_button.grid(row=1, column=4, padx=(4, 25), pady=(8, 25), sticky="ew")
+        memory_button.grid(row=1, column=3, padx=(4, 25), pady=(8, 25), sticky="ew")
         
     def check_admin_privileges(self):
         """Check if running as administrator"""
@@ -881,44 +747,6 @@ class ThalixGUI:
             
         except Exception as e:
             self.update_status(f"Error refreshing processes: {str(e)}", self.colors['error'])
-    
-    def on_game_profile_change(self, selected_game: str):
-        """Handle game profile selection change"""
-        logger.info(f"Game profile changed to: {selected_game}")
-        
-        profile = self.game_profiles[selected_game]
-        
-        # Update process name
-        self.process_name.set(profile['process'])
-        
-        # Update description
-        self.game_desc_label.configure(text=profile['description'])
-        
-        # Apply recommended CPU core selection
-        if profile['recommended_cores'] == 'performance':
-            self.select_performance_cores()
-        elif profile['recommended_cores'] == 'all':
-            self.select_all_cpus()
-        
-        # Load cheat table if available
-        if profile['cheat_table'] and os.path.exists(profile['cheat_table']):
-            try:
-                if self.cheat_table:
-                    self.cheat_table.load_from_file(profile['cheat_table'])
-                    self.loaded_cheat_entries = self.cheat_table.entries.copy()
-                    logger.info(f"Loaded cheat table: {profile['cheat_table']}")
-                    self.update_status(
-                        f"Loaded {len(self.cheat_table.entries)} cheats for {selected_game}",
-                        self.colors['success']
-                    )
-            except Exception as e:
-                logger.error(f"Failed to load cheat table: {e}")
-                self.update_status(f"Failed to load cheat table: {e}", self.colors['error'])
-        else:
-            logger.info(f"No cheat table configured for {selected_game}")
-            if self.cheat_table:
-                self.cheat_table.entries = []
-                self.loaded_cheat_entries = []
             
     def on_process_select(self, event):
         """Handle process selection from list"""
@@ -1365,7 +1193,7 @@ Percentage: {disk.percent}%
         
         ctk.CTkLabel(
             main_frame,
-            text="THALIX SETTINGS",
+            text="TOKIOS SETTINGS",
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color=self.colors['primary']
         ).pack(pady=30)
@@ -1433,83 +1261,6 @@ Percentage: {disk.percent}%
             border_width=2,
             border_color=self.colors['border']
         ).pack(pady=30)
-        
-    def load_cheat_table_file(self):
-        """Load a Cheat Engine (.ct) table file"""
-        try:
-            # Check if process is selected
-            process_name = self.process_name.get().strip()
-            if not process_name:
-                messagebox.showwarning("No Process", "Please select a process first!\n\nThe cheat table needs an active process to work with.")
-                return
-                
-            # Find process PID
-            target_pid = None
-            for proc in psutil.process_iter(['pid', 'name']):
-                if proc.info['name'] and proc.info['name'].lower() == process_name.lower():
-                    target_pid = proc.info['pid']
-                    break
-                    
-            if not target_pid:
-                messagebox.showerror("Error", f"Process '{process_name}' not found!\n\nMake sure the game is running.")
-                return
-            
-            # Open file dialog
-            file_path = filedialog.askopenfilename(
-                title="Select Cheat Engine Table",
-                filetypes=[("Cheat Engine Tables", "*.ct"), ("All Files", "*.*")],
-                initialdir=os.path.expanduser("~")
-            )
-            
-            if not file_path:
-                return  # User cancelled
-                
-            # Initialize CE integration if needed
-            if not self.ce_integration:
-                if not CheatEngineIntegration:
-                    messagebox.showerror("Error", "Cheat Engine integration module not available!")
-                    return
-                self.ce_integration = CheatEngineIntegration(target_pid)
-            else:
-                # Update PID if it changed
-                self.ce_integration.pid = target_pid
-                self.ce_integration.memory_editor = MemoryEditor()
-                if not self.ce_integration.memory_editor.open_process(target_pid):
-                    messagebox.showerror("Error", f"Failed to open process {target_pid} for memory access.\n\nMake sure the application is running as administrator!")
-                    return
-            
-            # Load the cheat table
-            self.log(f"Loading cheat table: {file_path}")
-            if self.ce_integration.load_cheat_table(file_path):
-                self.loaded_ct_file = file_path
-                num_entries = len(self.ce_integration.cheat_table.entries)
-                
-                # Show success message with entry count
-                messagebox.showinfo(
-                    "Cheat Table Loaded", 
-                    f"Successfully loaded cheat table!\n\n"
-                    f"File: {os.path.basename(file_path)}\n"
-                    f"Entries: {num_entries}\n"
-                    f"Process: {process_name} (PID: {target_pid})\n\n"
-                    f"Open the Memory Editor to view and use the loaded cheats."
-                )
-                
-                self.log(f"Loaded {num_entries} cheat entries from {os.path.basename(file_path)}")
-                
-                # Update status
-                self.update_status(f"Loaded {num_entries} cheats from {os.path.basename(file_path)}")
-            else:
-                messagebox.showerror(
-                    "Load Failed", 
-                    f"Failed to load cheat table!\n\n"
-                    f"File: {os.path.basename(file_path)}\n\n"
-                    f"The file may be corrupted or in an unsupported format."
-                )
-                self.log(f"Failed to load cheat table: {file_path}")
-                
-        except Exception as e:
-            self.log(f"Error loading cheat table: {str(e)}")
-            messagebox.showerror("Error", f"Error loading cheat table:\n\n{str(e)}")
         
     def open_memory_editor(self):
         """Open the memory editor window - Cheat Engine lite!"""
@@ -1721,25 +1472,12 @@ Percentage: {disk.percent}%
         table_frame.grid_rowconfigure(1, weight=1)
         table_frame.grid_columnconfigure(0, weight=1)
         
-        # Title frame to show loaded CE table info
-        title_frame = ctk.CTkFrame(table_frame, fg_color="transparent")
-        title_frame.grid(row=0, column=0, pady=15)
-        
         ctk.CTkLabel(
-            title_frame,
+            table_frame,
             text="CHEAT TABLE",
             font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
             text_color=self.colors['primary']
-        ).pack()
-        
-        # Show loaded CE table filename if available
-        if self.loaded_ct_file:
-            ctk.CTkLabel(
-                title_frame,
-                text=f"[{os.path.basename(self.loaded_ct_file)}]",
-                font=ctk.CTkFont(size=10),
-                text_color=self.colors['success']
-            ).pack(pady=(2, 0))
+        ).grid(row=0, column=0, pady=15)
         
         # Cheat table display
         table_display_frame = ctk.CTkFrame(table_frame, fg_color=self.colors['background'], corner_radius=8)
@@ -1767,71 +1505,26 @@ Percentage: {disk.percent}%
         table_scrollbar.grid(row=0, column=1, sticky="ns")
         table_tree.configure(yscrollcommand=table_scrollbar.set)
         
-        # Load preset cheats if available
-        if self.loaded_cheat_entries:
-            for entry in self.loaded_cheat_entries:
-                # Add to cheat table if not already there
-                if not any(e['name'] == entry['name'] for e in self.cheat_table.entries):
-                    self.cheat_table.entries.append(entry.copy())
-        
         def refresh_table():
             """Refresh cheat table display"""
             table_tree.delete(*table_tree.get_children())
-            
-            # First, display entries from loaded CE table if available
-            if self.ce_integration and self.ce_integration.cheat_table:
-                for i, entry in enumerate(self.ce_integration.cheat_table.entries):
-                    try:
-                        # Resolve address (handles pointers)
-                        address = self.ce_integration.resolve_address(entry)
-                        if address and address > 0:
-                            addr_str = f"0x{address:X}"
-                            
-                            # Read current value
-                            value = self.ce_integration.read_value(entry)
-                            if value is None:
-                                value = "Error"
-                        else:
-                            addr_str = "[Pointer]"
-                            value = "Unresolved"
-                    except Exception as e:
-                        addr_str = "Error"
-                        value = str(e)
-                    
-                    frozen_str = "✓" if entry.get('frozen', False) else ""
-                    ce_type = entry.get('type', 'int')
-                    
-                    table_tree.insert('', 'end', iid=f"ce_{i}", values=(
-                        addr_str,
-                        ce_type,
-                        value,
-                        frozen_str,
-                        entry.get('description', '')
-                    ), tags=('ce_entry',))
-            
-            # Then display native cheat table entries
             for i, entry in enumerate(self.cheat_table.entries):
-                # Handle template entries with address 0
-                if entry['address'] == 0:
-                    addr_str = "Not scanned"
-                    value = "Scan first"
-                else:
-                    addr_str = f"0x{entry['address']:X}"
-                    
-                    # Read current value
-                    try:
-                        if entry['type'] == 'int':
-                            value = self.memory_editor.read_int(entry['address'])
-                        elif entry['type'] == 'float':
-                            value = self.memory_editor.read_float(entry['address'])
-                        elif entry['type'] == 'long':
-                            value = self.memory_editor.read_long(entry['address'])
-                        elif entry['type'] == 'double':
-                            value = self.memory_editor.read_double(entry['address'])
-                        else:
-                            value = "???"
-                    except:
-                        value = "Error"
+                addr_str = f"0x{entry['address']:X}"
+                
+                # Read current value
+                try:
+                    if entry['type'] == 'int':
+                        value = self.memory_editor.read_int(entry['address'])
+                    elif entry['type'] == 'float':
+                        value = self.memory_editor.read_float(entry['address'])
+                    elif entry['type'] == 'long':
+                        value = self.memory_editor.read_long(entry['address'])
+                    elif entry['type'] == 'double':
+                        value = self.memory_editor.read_double(entry['address'])
+                    else:
+                        value = "???"
+                except:
+                    value = "Error"
                     
                 frozen_str = "✓" if entry.get('frozen', False) else ""
                 table_tree.insert('', 'end', iid=i, values=(
@@ -1839,7 +1532,7 @@ Percentage: {disk.percent}%
                     entry['type'],
                     value,
                     frozen_str,
-                    entry.get('description', entry.get('name', ''))
+                    entry.get('description', '')
                 ))
         
         def add_address_to_table():
@@ -1852,30 +1545,7 @@ Percentage: {disk.percent}%
             addr_str = results_listbox.get(selection[0])
             address = int(addr_str, 16)
             
-            # Check if there are template entries waiting for addresses
-            template_entries = [e for e in self.cheat_table.entries if e['address'] == 0]
-            
-            if template_entries:
-                # Show dialog to assign to template
-                names = [e['name'] for e in template_entries] + ["New Entry"]
-                dialog = ctk.CTkInputDialog(
-                    text=f"Assign to:\n" + "\n".join(f"{i+1}. {name}" for i, name in enumerate(names)),
-                    title="Add to Table"
-                )
-                choice = dialog.get_input()
-                
-                if choice and choice.isdigit():
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(template_entries):
-                        # Assign to template
-                        for i, e in enumerate(self.cheat_table.entries):
-                            if e['name'] == template_entries[idx]['name']:
-                                self.cheat_table.entries[i]['address'] = address
-                                break
-                        refresh_table()
-                        return
-            
-            # Get description from user for new entry
+            # Get description from user
             desc = ctk.CTkInputDialog(text="Enter description:", title="Add to Table").get_input()
             if desc:
                 self.cheat_table.add_entry(
@@ -1892,76 +1562,34 @@ Percentage: {disk.percent}%
             if not selection:
                 messagebox.showwarning("No Selection", "Select an entry from the table!")
                 return
-            
-            item_id = selection[0]
-            
-            # Check if this is a CE entry
-            if isinstance(item_id, str) and item_id.startswith('ce_'):
-                # CE table entry
-                ce_index = int(item_id.split('_')[1])
-                if not self.ce_integration or ce_index >= len(self.ce_integration.cheat_table.entries):
-                    messagebox.showerror("Error", "CE entry not found!")
-                    return
-                    
-                entry = self.ce_integration.cheat_table.entries[ce_index]
                 
-                # Get new value from user
-                new_value_str = ctk.CTkInputDialog(
-                    text=f"Enter new value for {entry.get('description', 'entry')}:",
-                    title="Modify Value"
-                ).get_input()
+            index = int(selection[0])
+            entry = self.cheat_table.get_entry(index)
+            
+            if not entry:
+                return
                 
-                if new_value_str:
-                    try:
-                        value_type = entry.get('type', 'int')
-                        if value_type in ['int', '4 Bytes']:
-                            new_value = int(new_value_str)
-                        elif value_type in ['float', 'Float']:
-                            new_value = float(new_value_str)
-                        elif value_type in ['long', '8 Bytes']:
-                            new_value = int(new_value_str)
-                        elif value_type in ['double', 'Double']:
-                            new_value = float(new_value_str)
-                        else:
-                            new_value = int(new_value_str)
+            # Get new value from user
+            new_value_str = ctk.CTkInputDialog(text="Enter new value:", title="Modify Value").get_input()
+            if new_value_str:
+                try:
+                    if entry['type'] == 'int':
+                        new_value = int(new_value_str)
+                        self.memory_editor.write_int(entry['address'], new_value)
+                    elif entry['type'] == 'float':
+                        new_value = float(new_value_str)
+                        self.memory_editor.write_float(entry['address'], new_value)
+                    elif entry['type'] == 'long':
+                        new_value = int(new_value_str)
+                        self.memory_editor.write_long(entry['address'], new_value)
+                    elif entry['type'] == 'double':
+                        new_value = float(new_value_str)
+                        self.memory_editor.write_double(entry['address'], new_value)
                         
-                        if self.ce_integration.write_value(entry, new_value):
-                            refresh_table()
-                            messagebox.showinfo("Success", "Value modified successfully!")
-                        else:
-                            messagebox.showerror("Error", "Failed to write value")
-                    except Exception as e:
-                        messagebox.showerror("Error", f"Failed to modify value: {str(e)}")
-            else:
-                # Native table entry
-                index = int(item_id)
-                entry = self.cheat_table.get_entry(index)
-                
-                if not entry:
-                    return
-                    
-                # Get new value from user
-                new_value_str = ctk.CTkInputDialog(text="Enter new value:", title="Modify Value").get_input()
-                if new_value_str:
-                    try:
-                        if entry['type'] == 'int':
-                            new_value = int(new_value_str)
-                            self.memory_editor.write_int(entry['address'], new_value)
-                        elif entry['type'] == 'float':
-                            new_value = float(new_value_str)
-                            self.memory_editor.write_float(entry['address'], new_value)
-                        elif entry['type'] == 'long':
-                            new_value = int(new_value_str)
-                            self.memory_editor.write_long(entry['address'], new_value)
-                        elif entry['type'] == 'double':
-                            new_value = float(new_value_str)
-                            self.memory_editor.write_double(entry['address'], new_value)
-                            
-                        refresh_table()
-                        messagebox.showinfo("Success", "Value modified successfully!")
-                    except Exception as e:
-                        messagebox.showerror("Error", f"Failed to modify value: {str(e)}")
-        
+                    refresh_table()
+                    messagebox.showinfo("Success", "Value modified successfully!")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to modify value: {str(e)}")
         
         def toggle_freeze():
             """Toggle freeze on selected entry"""
@@ -1969,68 +1597,35 @@ Percentage: {disk.percent}%
             if not selection:
                 messagebox.showwarning("No Selection", "Select an entry from the table!")
                 return
+                
+            index = int(selection[0])
+            entry = self.cheat_table.get_entry(index)
             
-            item_id = selection[0]
+            if not entry:
+                return
+                
+            entry['frozen'] = not entry.get('frozen', False)
             
-            # Check if this is a CE entry
-            if isinstance(item_id, str) and item_id.startswith('ce_'):
-                # CE table entry
-                ce_index = int(item_id.split('_')[1])
-                if not self.ce_integration or ce_index >= len(self.ce_integration.cheat_table.entries):
-                    messagebox.showerror("Error", "CE entry not found!")
-                    return
+            if entry['frozen']:
+                # Read current value and freeze it
+                if entry['type'] == 'int':
+                    value = self.memory_editor.read_int(entry['address'])
+                elif entry['type'] == 'float':
+                    value = self.memory_editor.read_float(entry['address'])
+                elif entry['type'] == 'long':
+                    value = self.memory_editor.read_long(entry['address'])
+                elif entry['type'] == 'double':
+                    value = self.memory_editor.read_double(entry['address'])
+                    
+                entry['frozen_value'] = value
+                self.memory_freezer.add_frozen_address(entry['address'], value, entry['type'])
                 
-                entry = self.ce_integration.cheat_table.entries[ce_index]
-                entry['frozen'] = not entry.get('frozen', False)
-                
-                if entry['frozen']:
-                    # Read current value and freeze it
-                    value = self.ce_integration.read_value(entry)
-                    if value is not None:
-                        entry['frozen_value'] = value
-                        self.ce_integration.freeze_value(entry, value)
-                        messagebox.showinfo("Frozen", f"Value frozen at: {value}")
-                    else:
-                        entry['frozen'] = False
-                        messagebox.showerror("Error", "Could not read value to freeze")
-                else:
-                    # Unfreeze
-                    if hasattr(self.ce_integration, 'memory_freezer') and self.ce_integration.memory_freezer:
-                        address = self.ce_integration.resolve_address(entry)
-                        if address:
-                            self.ce_integration.memory_freezer.remove_frozen_address(address)
-                
-                refresh_table()
+                if not self.memory_freezer.running:
+                    self.memory_freezer.start()
             else:
-                # Native table entry
-                index = int(item_id)
-                entry = self.cheat_table.get_entry(index)
+                self.memory_freezer.remove_frozen_address(entry['address'])
                 
-                if not entry:
-                    return
-                    
-                entry['frozen'] = not entry.get('frozen', False)
-                
-                if entry['frozen']:
-                    # Read current value and freeze it
-                    if entry['type'] == 'int':
-                        value = self.memory_editor.read_int(entry['address'])
-                    elif entry['type'] == 'float':
-                        value = self.memory_editor.read_float(entry['address'])
-                    elif entry['type'] == 'long':
-                        value = self.memory_editor.read_long(entry['address'])
-                    elif entry['type'] == 'double':
-                        value = self.memory_editor.read_double(entry['address'])
-                        
-                    entry['frozen_value'] = value
-                    self.memory_freezer.add_frozen_address(entry['address'], value, entry['type'])
-                    
-                    if not self.memory_freezer.running:
-                        self.memory_freezer.start()
-                else:
-                    self.memory_freezer.remove_frozen_address(entry['address'])
-                    
-                refresh_table()
+            refresh_table()
         
         def save_table():
             """Save cheat table to file"""
@@ -2139,7 +1734,7 @@ Percentage: {disk.percent}%
 
 def main():
     """Main entry point"""
-    app = ThalixGUI()
+    app = EldenRingStutterFixGUI()
     app.run()
 
 if __name__ == "__main__":
