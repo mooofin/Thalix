@@ -9,21 +9,13 @@ from PIL import Image, ImageTk
 import os
 import sys
 
-try:
-    from memory_editor import MemoryEditor, CheatTable, MemoryFreezer
-except ImportError:
-    print("Memory editor module not available")
-    MemoryEditor = None
-    CheatTable = None
-    MemoryFreezer = None
-
 class ThalixGUI:
     def __init__(self):
         
         self.root = ctk.CTk()
-        self.root.title("Thalix")
+        self.root.title("Thalix - CPU Affinity Manager")
         self.root.geometry("1000x800")
-        self.root.configure(fg_color=("#0a0a0a", "#0a0a0a"))
+        self.root.configure(fg_color=("#0f0f0f", "#0f0f0f"))
         
     
         try:
@@ -86,25 +78,20 @@ class ThalixGUI:
         self.search_var = tk.StringVar()
         self.search_var.trace('w', self.filter_processes)
         
-        # Memory editor variables
-        self.memory_editor = None
-        self.cheat_table = CheatTable() if CheatTable else None
-        self.memory_freezer = None
-        
-        # Elden Ring Color Scheme (semi-transparent look)
+        # Color scheme
         self.colors = {
-            'primary': '#C9A96E',        # Elden Ring Gold
-            'secondary': '#8B4513',      # Saddle Brown
-            'accent': '#DC143C',         # Crimson Red
-            'background': '#1a1a1a',     # Dark Charcoal
-            'surface': '#2d2d2d',        # Dark Gray (will use low opacity via fg_color_transparency)
-            'surface_light': '#3a3a3a',  # Lighter Gray
-            'text': '#FFFFFF',           # White text for better contrast
-            'text_secondary': '#E6E6E6', # Light Gray
-            'success': '#4CAF50',        # Green
-            'warning': '#FF9800',        # Orange
-            'error': '#F44336',          # Red
-            'border': '#C9A96E',         # Gold Border
+            'primary': '#DC143C',        # Crimson Red
+            'secondary': '#8B0000',      # Dark Red
+            'accent': '#FF4444',         # Bright Red
+            'background': '#0f0f0f',     # Very Dark Gray
+            'surface': '#1a1a1a',        # Dark Charcoal
+            'surface_light': '#2d2d2d',  # Medium Gray
+            'text': '#FFFFFF',           # White text
+            'text_secondary': '#CCCCCC', # Light Gray
+            'success': '#28A745',        # Green
+            'warning': '#FFC107',        # Amber
+            'error': '#DC3545',          # Red
+            'border': '#DC143C',         # Crimson Border
             'shadow': '#000000'          # Black Shadow
         }
         
@@ -116,7 +103,7 @@ class ThalixGUI:
         self.check_admin_privileges()
         
     def create_widgets(self):
-        """Create and arrange all GUI widgets with Elden Ring theming"""
+        """Create and arrange all GUI widgets"""
         # Main container with background
         self.main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         self.main_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
@@ -136,76 +123,60 @@ class ThalixGUI:
         self.create_footer()
         
     def create_background(self):
-        """Create the Elden Ring background"""
-        # Background frame
-        self.bg_frame = ctk.CTkFrame(self.main_frame, fg_color="#0a0a0a")
+        """Create the background frame"""
+        self.bg_frame = ctk.CTkFrame(self.main_frame, fg_color=self.colors['background'])
         self.bg_frame.grid(row=0, column=0, padx=0, pady=0, sticky="nsew")
         self.bg_frame.grid_columnconfigure(0, weight=1)
         self.bg_frame.grid_rowconfigure(0, weight=1)
         
         # Try to load background image
         try:
-            # Look for background image in assets folder
             bg_paths = [
-                os.path.join("assets", "elden_ring_bg.jpg"),
                 os.path.join("assets", "elden_ring_bg_optimized.jpg"),
+                os.path.join("assets", "elden_ring_bg.jpg"),
                 os.path.join("assets", "image1.jpg"),
             ]
             
-            bg_loaded = False
             for bg_path in bg_paths:
-                if os.path.exists(bg_path):
-                    print(f"Trying to load background from: {bg_path}")
-                    self.bg_image_original = Image.open(bg_path)
+                if not os.path.exists(bg_path):
+                    continue
                     
-                    # Get window size
+                try:
+                    # Load and resize image
+                    img = Image.open(bg_path)
                     window_width, window_height = 1000, 800
                     
-                    # Resize to cover entire window (crop to fit)
-                    img_width, img_height = self.bg_image_original.size
-                    img_aspect = img_width / img_height
+                    # Calculate aspect ratio
+                    img_aspect = img.width / img.height
                     window_aspect = window_width / window_height
                     
+                    # Resize to cover window
                     if img_aspect > window_aspect:
-                        # Image is wider, fit to height
                         new_height = window_height
                         new_width = int(new_height * img_aspect)
                     else:
-                        # Image is taller, fit to width
                         new_width = window_width
                         new_height = int(new_width / img_aspect)
                     
-                    # Resize image
-                    self.bg_image = self.bg_image_original.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
                     
-                    # Apply slight darkening for better text readability
+                    # Darken for better text readability
                     from PIL import ImageEnhance
-                    enhancer = ImageEnhance.Brightness(self.bg_image)
-                    self.bg_image = enhancer.enhance(0.7)  # Darken to 70% brightness - more visible!
+                    enhancer = ImageEnhance.Brightness(img)
+                    img = enhancer.enhance(0.6)
                     
-                    self.bg_photo = ImageTk.PhotoImage(self.bg_image)
-                    
-                    # Create background label that covers entire window
-                    self.bg_label = tk.Label(
-                        self.bg_frame,
-                        image=self.bg_photo,
-                        bg="#0a0a0a"
-                    )
+                    self.bg_photo = ImageTk.PhotoImage(img)
+                    self.bg_label = tk.Label(self.bg_frame, image=self.bg_photo, bg=self.colors['background'])
                     self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-                    print(f"✅ Background image loaded successfully from: {bg_path}")
-                    bg_loaded = True
                     break
-            
-            if not bg_loaded:
-                print("❌ No background image found in assets folder")
-                print("Available files:", os.listdir("assets"))
-        except Exception as e:
-            print(f"❌ Could not load background image: {e}")
-            import traceback
-            traceback.print_exc()
+                except Exception:
+                    continue
+                    
+        except Exception:
+            pass
         
     def create_header(self):
-        """Create the header section with Elden Ring styling"""
+        """Create the header section"""
         header_frame = ctk.CTkFrame(
             self.bg_frame, 
             fg_color=self.colors['surface'],
@@ -216,11 +187,10 @@ class ThalixGUI:
         header_frame.grid(row=0, column=0, padx=20, pady=20, sticky="ew")
         header_frame.grid_columnconfigure(1, weight=1)
         
-        # Title with Elden Ring styling - Medieval font
         title_label = ctk.CTkLabel(
             header_frame, 
             text="THALIX",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=32, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=32, weight="bold"),
             text_color=self.colors['primary']
         )
         title_label.grid(row=0, column=0, padx=30, pady=20, sticky="w")
@@ -264,11 +234,10 @@ class ThalixGUI:
         )
         self.status_label.pack(padx=20, pady=15)
         
-        # Start system info updates
         self.update_system_info()
         
     def create_content(self):
-        """Create the main content area with Elden Ring theming"""
+        """Create the main content area"""
         content_frame = ctk.CTkFrame(
             self.bg_frame, 
             fg_color=self.colors['surface'],
@@ -277,17 +246,26 @@ class ThalixGUI:
             border_color=self.colors['border']
         )
         content_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
-        content_frame.grid_columnconfigure((0, 1), weight=1)
+        content_frame.grid_columnconfigure(0, weight=1)
         content_frame.grid_rowconfigure(0, weight=1)
         
-        # Left panel - Process Management
-        self.create_process_panel(content_frame)
+        # Create tabbed interface
+        self.tab_view = ctk.CTkTabview(content_frame, fg_color=self.colors['surface_light'])
+        self.tab_view.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Right panel - CPU Configuration
-        self.create_cpu_panel(content_frame)
+        # CPU Affinity tab
+        affinity_tab = self.tab_view.add("CPU Affinity")
+        affinity_tab.grid_columnconfigure((0, 1), weight=1)
+        affinity_tab.grid_rowconfigure(0, weight=1)
+        self.create_process_panel(affinity_tab)
+        self.create_cpu_panel(affinity_tab)
+        
+        # Memory Editor tab
+        memory_tab = self.tab_view.add("Memory Editor")
+        self.create_memory_editor_tab(memory_tab)
         
     def create_process_panel(self, parent):
-        """Create the process management panel with Elden Ring styling"""
+        """Create the process management panel"""
         process_frame = ctk.CTkFrame(
             parent, 
             fg_color=self.colors['surface_light'],
@@ -299,7 +277,6 @@ class ThalixGUI:
         process_frame.grid_columnconfigure(0, weight=1)
         process_frame.grid_rowconfigure(2, weight=1)
         
-        # Process input section
         input_frame = ctk.CTkFrame(
             process_frame,
             fg_color=self.colors['background'],
@@ -311,7 +288,7 @@ class ThalixGUI:
         ctk.CTkLabel(
             input_frame,
             text="TARGET PROCESS",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
         
@@ -328,7 +305,6 @@ class ThalixGUI:
         )
         self.process_entry.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="ew")
         
-        # Priority selection
         priority_frame = ctk.CTkFrame(
             input_frame,
             fg_color="transparent"
@@ -356,7 +332,6 @@ class ThalixGUI:
         )
         priority_menu.grid(row=0, column=1, sticky="ew")
         
-        # Process info section
         info_frame = ctk.CTkFrame(
             process_frame,
             fg_color=self.colors['background'],
@@ -368,7 +343,7 @@ class ThalixGUI:
         ctk.CTkLabel(
             info_frame,
             text="PROCESS INFORMATION",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
         
@@ -382,7 +357,6 @@ class ThalixGUI:
         )
         self.process_info_label.grid(row=1, column=0, padx=20, pady=(0, 15), sticky="ew")
         
-        # Process list
         list_frame = ctk.CTkFrame(
             process_frame,
             fg_color=self.colors['background'],
@@ -395,7 +369,7 @@ class ThalixGUI:
         ctk.CTkLabel(
             list_frame,
             text="RUNNING PROCESSES",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
         
@@ -413,7 +387,6 @@ class ThalixGUI:
         )
         self.search_entry.grid(row=1, column=0, padx=20, pady=(0, 10), sticky="ew")
         
-        # Process list with scrollbar
         self.process_listbox = tk.Listbox(
             list_frame,
             bg=self.colors['surface'],
@@ -429,30 +402,27 @@ class ThalixGUI:
         self.process_listbox.grid(row=2, column=0, padx=20, pady=(0, 10), sticky="nsew")
         self.process_listbox.bind('<<ListboxSelect>>', self.on_process_select)
         
-        # Store all processes for filtering
         self.all_processes = []
         
-        # Scrollbar for process list
         scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.process_listbox.yview)
         scrollbar.grid(row=2, column=1, sticky="ns")
         self.process_listbox.configure(yscrollcommand=scrollbar.set)
         
-        # Refresh button with Elden Ring styling
         refresh_btn = ctk.CTkButton(
             list_frame,
             text="REFRESH PROCESS LIST",
             command=self.refresh_process_list,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=12, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=12, weight="bold"),
             height=35,
             fg_color=self.colors['primary'],
-            hover_color="#B8941F",
+            hover_color=self.colors['accent'],
             border_width=2,
             border_color=self.colors['border']
         )
         refresh_btn.grid(row=3, column=0, padx=20, pady=(0, 15), sticky="ew")
         
     def create_cpu_panel(self, parent):
-        """Create the CPU configuration panel with Elden Ring styling"""
+        """Create the CPU configuration panel"""
         cpu_frame = ctk.CTkFrame(
             parent, 
             fg_color=self.colors['surface_light'],
@@ -464,7 +434,6 @@ class ThalixGUI:
         cpu_frame.grid_columnconfigure(0, weight=1)
         cpu_frame.grid_rowconfigure(1, weight=1)
         
-        # CPU selection section
         selection_frame = ctk.CTkFrame(
             cpu_frame,
             fg_color=self.colors['background'],
@@ -476,11 +445,10 @@ class ThalixGUI:
         ctk.CTkLabel(
             selection_frame,
             text="CPU CORE SELECTION",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=16, weight="bold"),
             text_color=self.colors['primary']
         ).grid(row=0, column=0, padx=20, pady=(15, 5), sticky="w")
         
-        # CPU checkboxes container
         self.cpu_container = ctk.CTkScrollableFrame(
             cpu_frame, 
             height=200,
@@ -490,10 +458,8 @@ class ThalixGUI:
         self.cpu_container.grid(row=1, column=0, padx=15, pady=0, sticky="nsew")
         self.cpu_container.grid_columnconfigure(0, weight=1)
         
-        # Create CPU checkboxes
         self.create_cpu_checkboxes()
         
-        # Quick selection buttons with Elden Ring styling
         quick_frame = ctk.CTkFrame(
             cpu_frame,
             fg_color=self.colors['background'],
@@ -506,10 +472,10 @@ class ThalixGUI:
             quick_frame,
             text="SELECT ALL",
             command=self.select_all_cpus,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=11, weight="bold"),
             height=35,
             fg_color=self.colors['success'],
-            hover_color="#45A049",
+            hover_color="#218838",
             border_width=1,
             border_color=self.colors['border']
         ).grid(row=0, column=0, padx=(15, 5), pady=15, sticky="ew")
@@ -518,10 +484,10 @@ class ThalixGUI:
             quick_frame,
             text="DESELECT ALL",
             command=self.deselect_all_cpus,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=11, weight="bold"),
             height=35,
             fg_color=self.colors['error'],
-            hover_color="#D32F2F",
+            hover_color="#C82333",
             border_width=1,
             border_color=self.colors['border']
         ).grid(row=0, column=1, padx=5, pady=15, sticky="ew")
@@ -530,25 +496,24 @@ class ThalixGUI:
             quick_frame,
             text="PERFORMANCE CORES",
             command=self.select_performance_cores,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=11, weight="bold"),
             height=35,
             fg_color=self.colors['warning'],
-            hover_color="#F57C00",
+            hover_color="#E0A800",
             border_width=1,
             border_color=self.colors['border']
         ).grid(row=0, column=2, padx=(5, 15), pady=15, sticky="ew")
         
     def create_cpu_checkboxes(self):
-        """Create CPU core checkboxes with Elden Ring styling and usage indicators"""
+        """Create CPU core checkboxes with usage indicators"""
         cpu_count = psutil.cpu_count()
         self.cpu_vars = []
         self.cpu_usage_labels = []
         
         for i in range(cpu_count):
-            var = tk.BooleanVar(value=True)  # Default to selected
+            var = tk.BooleanVar(value=True)
             self.cpu_vars.append(var)
             
-            # Frame for each CPU core
             cpu_frame = ctk.CTkFrame(
                 self.cpu_container,
                 fg_color="transparent"
@@ -560,16 +525,15 @@ class ThalixGUI:
                 cpu_frame,
                 text=f"Core {i}",
                 variable=var,
-                font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
+                font=ctk.CTkFont(family="Arial", size=13, weight="bold"),
                 text_color=self.colors['text'],
                 fg_color=self.colors['primary'],
-                hover_color="#B8941F",
+                hover_color=self.colors['accent'],
                 border_width=2,
                 border_color=self.colors['border']
             )
             checkbox.grid(row=0, column=0, sticky="w")
             
-            # CPU usage label
             usage_label = ctk.CTkLabel(
                 cpu_frame,
                 text="0%",
@@ -580,11 +544,10 @@ class ThalixGUI:
             usage_label.grid(row=0, column=1, sticky="e", padx=(10, 0))
             self.cpu_usage_labels.append(usage_label)
         
-        # Start CPU usage monitoring
         self.start_cpu_usage_monitoring()
             
     def create_footer(self):
-        """Create the footer with action buttons in Elden Ring style"""
+        """Create the footer with action buttons"""
         footer_frame = ctk.CTkFrame(
             self.bg_frame, 
             fg_color=self.colors['surface'],
@@ -596,72 +559,67 @@ class ThalixGUI:
         footer_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
         footer_frame.grid_rowconfigure((0, 1), weight=1)
         
-        # Apply button with Elden Ring styling
         self.apply_button = ctk.CTkButton(
             footer_frame,
             text="APPLY AFFINITY",
             command=self.apply_affinity_and_priority,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=15, weight="bold"),
             height=50,
             fg_color=self.colors['success'],
-            hover_color="#45A049",
+            hover_color="#218838",
             border_width=3,
             border_color=self.colors['border'],
             corner_radius=12
         )
         self.apply_button.grid(row=0, column=0, padx=(25, 8), pady=(25, 8), sticky="ew")
         
-        # Monitor button with Elden Ring styling
         self.monitor_button = ctk.CTkButton(
             footer_frame,
             text="START MONITORING",
             command=self.toggle_monitoring,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=15, weight="bold"),
             height=50,
             fg_color=self.colors['warning'],
-            hover_color="#F57C00",
+            hover_color="#E0A800",
             border_width=3,
             border_color=self.colors['border'],
             corner_radius=12
         )
         self.monitor_button.grid(row=0, column=1, padx=8, pady=(25, 8), sticky="ew")
         
-        # Save Preset button
         save_preset_button = ctk.CTkButton(
             footer_frame,
             text="SAVE PRESET",
             command=self.save_preset,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=15, weight="bold"),
             height=50,
             fg_color=self.colors['primary'],
-            hover_color="#B8941F",
+            hover_color=self.colors['accent'],
             border_width=3,
             border_color=self.colors['border'],
             corner_radius=12
         )
         save_preset_button.grid(row=0, column=2, padx=8, pady=(25, 8), sticky="ew")
         
-        # Settings button with Elden Ring styling
         settings_button = ctk.CTkButton(
             footer_frame,
             text="SETTINGS",
             command=self.open_settings,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=15, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=15, weight="bold"),
             height=50,
             fg_color=self.colors['secondary'],
-            hover_color="#A0522D",
+            hover_color="#A00000",
             border_width=3,
             border_color=self.colors['border'],
             corner_radius=12
         )
         settings_button.grid(row=0, column=3, padx=(8, 25), pady=(25, 8), sticky="ew")
         
-        # Load Preset button (second row)
         load_preset_button = ctk.CTkButton(
             footer_frame,
             text="LOAD PRESET",
             command=self.load_preset,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=13, weight="bold"),
             height=40,
             fg_color=self.colors['surface_light'],
             hover_color=self.colors['surface'],
@@ -671,12 +629,11 @@ class ThalixGUI:
         )
         load_preset_button.grid(row=1, column=0, columnspan=2, padx=(25, 8), pady=(8, 25), sticky="ew")
         
-        # Performance Stats button
         stats_button = ctk.CTkButton(
             footer_frame,
             text="PERFORMANCE STATS",
             command=self.show_performance_stats,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
+            font=ctk.CTkFont(family="Arial", size=13, weight="bold"),
             height=40,
             fg_color=self.colors['surface_light'],
             hover_color=self.colors['surface'],
@@ -684,22 +641,7 @@ class ThalixGUI:
             border_color=self.colors['border'],
             corner_radius=10
         )
-        stats_button.grid(row=1, column=2, padx=(8, 4), pady=(8, 25), sticky="ew")
-        
-        # Memory Editor button (NEW!)
-        memory_button = ctk.CTkButton(
-            footer_frame,
-            text="MEMORY EDITOR",
-            command=self.open_memory_editor,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
-            height=40,
-            fg_color="#8B008B",  # Dark Magenta for dangerous tools
-            hover_color="#9932CC",
-            border_width=2,
-            border_color=self.colors['border'],
-            corner_radius=10
-        )
-        memory_button.grid(row=1, column=3, padx=(4, 25), pady=(8, 25), sticky="ew")
+        stats_button.grid(row=1, column=2, columnspan=2, padx=(8, 25), pady=(8, 25), sticky="ew")
         
     def check_admin_privileges(self):
         """Check if running as administrator"""
@@ -901,7 +843,7 @@ class ThalixGUI:
             mem = psutil.virtual_memory()
             cpu_count = psutil.cpu_count()
             
-            sys_info_text = f"⚡ {cpu_count} Cores | 🔥 {cpu_freq.current:.0f}MHz | 💾 {mem.percent:.1f}% RAM"
+            sys_info_text = f"{cpu_count} Cores | {cpu_freq.current:.0f}MHz | {mem.percent:.1f}% RAM"
             self.sys_info_label.configure(text=sys_info_text)
         except:
             pass
@@ -1120,7 +1062,7 @@ class ThalixGUI:
         disk = psutil.disk_usage('/')
         
         stats_text = f"""
-🔥 CPU STATISTICS
+CPU STATISTICS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total Cores: {psutil.cpu_count()}
 Physical Cores: {psutil.cpu_count(logical=False)}
@@ -1133,14 +1075,14 @@ Per-Core Usage:
             stats_text += f"  Core {i}: {percent}%\n"
         
         stats_text += f"""
-💾 MEMORY STATISTICS
+MEMORY STATISTICS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total: {mem.total / (1024**3):.2f} GB
 Available: {mem.available / (1024**3):.2f} GB
 Used: {mem.used / (1024**3):.2f} GB
 Percentage: {mem.percent}%
 
-💿 DISK STATISTICS
+DISK STATISTICS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total: {disk.total / (1024**3):.2f} GB
 Used: {disk.used / (1024**3):.2f} GB
@@ -1261,467 +1203,17 @@ Percentage: {disk.percent}%
             border_color=self.colors['border']
         ).pack(pady=30)
         
+    def create_memory_editor_tab(self, parent):
+        """Create the memory editor tab"""
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from gui.memory_editor_tab import MemoryEditorTab
+        self.memory_editor = MemoryEditorTab(parent, self.colors)
+    
     def open_memory_editor(self):
-        """Open the memory editor window - Cheat Engine lite!"""
-        if not MemoryEditor:
-            messagebox.showerror("Error", "Memory editor module not available!")
-            return
-            
-        # Check if process is selected
-        process_name = self.process_name.get().strip()
-        if not process_name:
-            messagebox.showwarning("No Process", "Please select a process first!")
-            return
-            
-        # Find process PID
-        target_pid = None
-        for proc in psutil.process_iter(['pid', 'name']):
-            if proc.info['name'] and proc.info['name'].lower() == process_name.lower():
-                target_pid = proc.info['pid']
-                break
-                
-        if not target_pid:
-            messagebox.showerror("Error", f"Process '{process_name}' not found!")
-            return
-            
-        # Create memory editor window
-        mem_window = ctk.CTkToplevel(self.root)
-        mem_window.title(f"Memory Editor - {process_name}")
-        mem_window.geometry("1200x700")
-        mem_window.configure(fg_color=self.colors['background'])
-        
-        # Initialize memory editor
-        if not self.memory_editor:
-            self.memory_editor = MemoryEditor()
-        
-        if not self.memory_editor.open_process(target_pid):
-            messagebox.showerror("Error", "Failed to open process! Run as Administrator.")
-            mem_window.destroy()
-            return
-            
-        # Initialize memory freezer
-        self.memory_freezer = MemoryFreezer(self.memory_editor)
-        
-        # Main container
-        main_frame = ctk.CTkFrame(
-            mem_window,
-            fg_color=self.colors['surface'],
-            corner_radius=15,
-            border_width=2,
-            border_color=self.colors['border']
-        )
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-        main_frame.grid_columnconfigure(0, weight=1)
-        main_frame.grid_columnconfigure(1, weight=2)
-        main_frame.grid_rowconfigure(1, weight=1)
-        
-        # Title
-        ctk.CTkLabel(
-            main_frame,
-            text=f"MEMORY EDITOR - {process_name}",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=24, weight="bold"),
-            text_color=self.colors['primary']
-        ).grid(row=0, column=0, columnspan=2, pady=20)
-        
-        # Left panel - Memory Scanner
-        scanner_frame = ctk.CTkFrame(
-            main_frame,
-            fg_color=self.colors['surface_light'],
-            corner_radius=12,
-            border_width=2,
-            border_color=self.colors['border']
-        )
-        scanner_frame.grid(row=1, column=0, padx=(10, 5), pady=(0, 10), sticky="nsew")
-        
-        ctk.CTkLabel(
-            scanner_frame,
-            text="MEMORY SCANNER",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
-            text_color=self.colors['primary']
-        ).pack(pady=15)
-        
-        # Scan value input
-        scan_input_frame = ctk.CTkFrame(scanner_frame, fg_color="transparent")
-        scan_input_frame.pack(fill="x", padx=15, pady=10)
-        
-        ctk.CTkLabel(
-            scan_input_frame,
-            text="Value to scan:",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=self.colors['text']
-        ).pack(anchor="w", pady=(0, 5))
-        
-        scan_value_var = tk.StringVar()
-        scan_entry = ctk.CTkEntry(
-            scan_input_frame,
-            textvariable=scan_value_var,
-            font=ctk.CTkFont(size=14),
-            height=35
-        )
-        scan_entry.pack(fill="x", pady=(0, 10))
-        
-        # Value type selection
-        type_var = tk.StringVar(value="int")
-        type_frame = ctk.CTkFrame(scanner_frame, fg_color="transparent")
-        type_frame.pack(fill="x", padx=15, pady=5)
-        
-        ctk.CTkLabel(
-            type_frame,
-            text="Value Type:",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=self.colors['text']
-        ).pack(anchor="w", pady=(0, 5))
-        
-        type_menu = ctk.CTkOptionMenu(
-            type_frame,
-            variable=type_var,
-            values=["int", "float", "long", "double"],
-            font=ctk.CTkFont(size=12),
-            fg_color=self.colors['surface'],
-            button_color=self.colors['primary']
-        )
-        type_menu.pack(fill="x")
-        
-        # Scan results listbox
-        results_frame = ctk.CTkFrame(scanner_frame, fg_color=self.colors['background'], corner_radius=8)
-        results_frame.pack(fill="both", expand=True, padx=15, pady=15)
-        
-        ctk.CTkLabel(
-            results_frame,
-            text="Scan Results:",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            text_color=self.colors['primary']
-        ).pack(anchor="w", padx=10, pady=(10, 5))
-        
-        results_listbox = tk.Listbox(
-            results_frame,
-            bg=self.colors['surface'],
-            fg=self.colors['text'],
-            selectbackground=self.colors['primary'],
-            font=("Consolas", 10),
-            height=15
-        )
-        results_listbox.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        
-        scan_addresses = []  # Store scan results
-        
-        def perform_scan():
-            """Perform memory scan"""
-            value_str = scan_value_var.get().strip()
-            if not value_str:
-                messagebox.showwarning("No Value", "Enter a value to scan!")
-                return
-                
-            try:
-                value_type = type_var.get()
-                if value_type == 'int':
-                    value = int(value_str)
-                elif value_type == 'float':
-                    value = float(value_str)
-                elif value_type == 'long':
-                    value = int(value_str)
-                elif value_type == 'double':
-                    value = float(value_str)
-                    
-                # Show scanning message
-                results_listbox.delete(0, tk.END)
-                results_listbox.insert(0, "Scanning memory...")
-                mem_window.update()
-                
-                # Perform scan
-                addresses = self.memory_editor.scan_memory(value, value_type, 0x10000, 0x7FFFFFFF)
-                
-                # Update results
-                results_listbox.delete(0, tk.END)
-                scan_addresses.clear()
-                
-                if len(addresses) > 1000:
-                    results_listbox.insert(0, f"Too many results ({len(addresses)}). Refine your search!")
-                else:
-                    for addr in addresses[:500]:  # Limit to 500 results
-                        results_listbox.insert(tk.END, f"0x{addr:X}")
-                        scan_addresses.append(addr)
-                        
-                    if len(addresses) == 0:
-                        results_listbox.insert(0, "No results found")
-                        
-            except Exception as e:
-                messagebox.showerror("Scan Error", f"Error during scan: {str(e)}")
-        
-        # Scan button
-        ctk.CTkButton(
-            scanner_frame,
-            text="FIRST SCAN",
-            command=perform_scan,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=13, weight="bold"),
-            fg_color=self.colors['success'],
-            hover_color="#45A049",
-            height=40
-        ).pack(fill="x", padx=15, pady=(0, 15))
-        
-        # Right panel - Cheat Table
-        table_frame = ctk.CTkFrame(
-            main_frame,
-            fg_color=self.colors['surface_light'],
-            corner_radius=12,
-            border_width=2,
-            border_color=self.colors['border']
-        )
-        table_frame.grid(row=1, column=1, padx=(5, 10), pady=(0, 10), sticky="nsew")
-        table_frame.grid_rowconfigure(1, weight=1)
-        table_frame.grid_columnconfigure(0, weight=1)
-        
-        ctk.CTkLabel(
-            table_frame,
-            text="CHEAT TABLE",
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=16, weight="bold"),
-            text_color=self.colors['primary']
-        ).grid(row=0, column=0, pady=15)
-        
-        # Cheat table display
-        table_display_frame = ctk.CTkFrame(table_frame, fg_color=self.colors['background'], corner_radius=8)
-        table_display_frame.grid(row=1, column=0, padx=15, pady=(0, 10), sticky="nsew")
-        table_display_frame.grid_columnconfigure(0, weight=1)
-        table_display_frame.grid_rowconfigure(0, weight=1)
-        
-        # Create treeview for cheat table
-        columns = ('Address', 'Type', 'Value', 'Frozen', 'Description')
-        table_tree = ttk.Treeview(table_display_frame, columns=columns, show='headings', height=20)
-        
-        for col in columns:
-            table_tree.heading(col, text=col)
-            
-        table_tree.column('Address', width=120)
-        table_tree.column('Type', width=60)
-        table_tree.column('Value', width=100)
-        table_tree.column('Frozen', width=60)
-        table_tree.column('Description', width=200)
-        
-        table_tree.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
-        
-        # Scrollbar for table
-        table_scrollbar = ttk.Scrollbar(table_display_frame, orient="vertical", command=table_tree.yview)
-        table_scrollbar.grid(row=0, column=1, sticky="ns")
-        table_tree.configure(yscrollcommand=table_scrollbar.set)
-        
-        def refresh_table():
-            """Refresh cheat table display"""
-            table_tree.delete(*table_tree.get_children())
-            for i, entry in enumerate(self.cheat_table.entries):
-                addr_str = f"0x{entry['address']:X}"
-                
-                # Read current value
-                try:
-                    if entry['type'] == 'int':
-                        value = self.memory_editor.read_int(entry['address'])
-                    elif entry['type'] == 'float':
-                        value = self.memory_editor.read_float(entry['address'])
-                    elif entry['type'] == 'long':
-                        value = self.memory_editor.read_long(entry['address'])
-                    elif entry['type'] == 'double':
-                        value = self.memory_editor.read_double(entry['address'])
-                    else:
-                        value = "???"
-                except:
-                    value = "Error"
-                    
-                frozen_str = "✓" if entry.get('frozen', False) else ""
-                table_tree.insert('', 'end', iid=i, values=(
-                    addr_str,
-                    entry['type'],
-                    value,
-                    frozen_str,
-                    entry.get('description', '')
-                ))
-        
-        def add_address_to_table():
-            """Add selected address to cheat table"""
-            selection = results_listbox.curselection()
-            if not selection:
-                messagebox.showwarning("No Selection", "Select an address from scan results!")
-                return
-                
-            addr_str = results_listbox.get(selection[0])
-            address = int(addr_str, 16)
-            
-            # Get description from user
-            desc = ctk.CTkInputDialog(text="Enter description:", title="Add to Table").get_input()
-            if desc:
-                self.cheat_table.add_entry(
-                    name=desc,
-                    address=address,
-                    value_type=type_var.get(),
-                    description=desc
-                )
-                refresh_table()
-        
-        def modify_value():
-            """Modify value at selected address in table"""
-            selection = table_tree.selection()
-            if not selection:
-                messagebox.showwarning("No Selection", "Select an entry from the table!")
-                return
-                
-            index = int(selection[0])
-            entry = self.cheat_table.get_entry(index)
-            
-            if not entry:
-                return
-                
-            # Get new value from user
-            new_value_str = ctk.CTkInputDialog(text="Enter new value:", title="Modify Value").get_input()
-            if new_value_str:
-                try:
-                    if entry['type'] == 'int':
-                        new_value = int(new_value_str)
-                        self.memory_editor.write_int(entry['address'], new_value)
-                    elif entry['type'] == 'float':
-                        new_value = float(new_value_str)
-                        self.memory_editor.write_float(entry['address'], new_value)
-                    elif entry['type'] == 'long':
-                        new_value = int(new_value_str)
-                        self.memory_editor.write_long(entry['address'], new_value)
-                    elif entry['type'] == 'double':
-                        new_value = float(new_value_str)
-                        self.memory_editor.write_double(entry['address'], new_value)
-                        
-                    refresh_table()
-                    messagebox.showinfo("Success", "Value modified successfully!")
-                except Exception as e:
-                    messagebox.showerror("Error", f"Failed to modify value: {str(e)}")
-        
-        def toggle_freeze():
-            """Toggle freeze on selected entry"""
-            selection = table_tree.selection()
-            if not selection:
-                messagebox.showwarning("No Selection", "Select an entry from the table!")
-                return
-                
-            index = int(selection[0])
-            entry = self.cheat_table.get_entry(index)
-            
-            if not entry:
-                return
-                
-            entry['frozen'] = not entry.get('frozen', False)
-            
-            if entry['frozen']:
-                # Read current value and freeze it
-                if entry['type'] == 'int':
-                    value = self.memory_editor.read_int(entry['address'])
-                elif entry['type'] == 'float':
-                    value = self.memory_editor.read_float(entry['address'])
-                elif entry['type'] == 'long':
-                    value = self.memory_editor.read_long(entry['address'])
-                elif entry['type'] == 'double':
-                    value = self.memory_editor.read_double(entry['address'])
-                    
-                entry['frozen_value'] = value
-                self.memory_freezer.add_frozen_address(entry['address'], value, entry['type'])
-                
-                if not self.memory_freezer.running:
-                    self.memory_freezer.start()
-            else:
-                self.memory_freezer.remove_frozen_address(entry['address'])
-                
-            refresh_table()
-        
-        def save_table():
-            """Save cheat table to file"""
-            filename = filedialog.asksaveasfilename(
-                defaultextension=".json",
-                filetypes=[("Cheat Table", "*.json"), ("All Files", "*.*")]
-            )
-            if filename:
-                self.cheat_table.save_to_file(filename)
-                messagebox.showinfo("Success", "Cheat table saved!")
-        
-        def load_table():
-            """Load cheat table from file"""
-            filename = filedialog.askopenfilename(
-                filetypes=[("Cheat Table", "*.json"), ("All Files", "*.*")]
-            )
-            if filename:
-                self.cheat_table.load_from_file(filename)
-                refresh_table()
-                messagebox.showinfo("Success", "Cheat table loaded!")
-        
-        # Table action buttons
-        button_frame = ctk.CTkFrame(table_frame, fg_color="transparent")
-        button_frame.grid(row=2, column=0, padx=15, pady=(0, 15), sticky="ew")
-        button_frame.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
-        
-        ctk.CTkButton(
-            button_frame,
-            text="Add",
-            command=add_address_to_table,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
-            fg_color=self.colors['success'],
-            height=35
-        ).grid(row=0, column=0, padx=2, sticky="ew")
-        
-        ctk.CTkButton(
-            button_frame,
-            text="Modify",
-            command=modify_value,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
-            fg_color=self.colors['warning'],
-            height=35
-        ).grid(row=0, column=1, padx=2, sticky="ew")
-        
-        ctk.CTkButton(
-            button_frame,
-            text="Freeze",
-            command=toggle_freeze,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
-            fg_color="#00CED1",
-            height=35
-        ).grid(row=0, column=2, padx=2, sticky="ew")
-        
-        ctk.CTkButton(
-            button_frame,
-            text="Save",
-            command=save_table,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
-            fg_color=self.colors['primary'],
-            height=35
-        ).grid(row=0, column=3, padx=2, sticky="ew")
-        
-        ctk.CTkButton(
-            button_frame,
-            text="Load",
-            command=load_table,
-            font=ctk.CTkFont(family="Copperplate Gothic Bold", size=11, weight="bold"),
-            fg_color=self.colors['secondary'],
-            height=35
-        ).grid(row=0, column=4, padx=2, sticky="ew")
-        
-        # Auto-refresh table values
-        def auto_refresh():
-            if mem_window.winfo_exists():
-                refresh_table()
-                mem_window.after(1000, auto_refresh)  # Refresh every second
-                
-        auto_refresh()
-        
-        # Warning label
-        warning_label = ctk.CTkLabel(
-            main_frame,
-            text="WARNING: Use only in single-player! Memory editing may violate game ToS",
-            font=ctk.CTkFont(size=11, weight="bold"),
-            text_color=self.colors['error']
-        )
-        warning_label.grid(row=2, column=0, columnspan=2, pady=(0, 10))
-        
-        # Cleanup on close
-        def on_closing():
-            if self.memory_freezer:
-                self.memory_freezer.stop()
-            if self.memory_editor:
-                self.memory_editor.close_process()
-            mem_window.destroy()
-            
-        mem_window.protocol("WM_DELETE_WINDOW", on_closing)
+        """Open the memory editor window"""
+        messagebox.showinfo("Coming Soon", "Memory editor feature is currently under development.")
     
     def run(self):
         """Start the application"""

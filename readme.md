@@ -1,4 +1,4 @@
-﻿# Thalix
+﻿﻿# Thalix
 A high-performance process management and memory editing toolkit for eliminating game stuttering.
 
 ## what the heck is DPC Latency ??

@@ -6,11 +6,24 @@
 !readme.md
 !requirements.txt
 !*.bat
+!memory_editor.py
+!PROJECT_STRUCTURE.md
 
 # Allow src directory and Python files
 !src/
 !src/*.py
 !src/**/*.py
+!src/core/
+!src/core/*.py
+!src/gui/
+!src/gui/*.py
+!src/utils/
+!src/utils/*.py
+
+# Allow tests directory
+!tests/
+!tests/*.py
+!tests/**/*.py
 
 # Ignore Python cache even in allowed directories
 src/__pycache__/
@@ -50,6 +63,8 @@ Thumbs.db
 # Logs
 *.log
 thalix.log
+logs/
+!logs/.gitkeep
 
 # Temporary files
 temp_icon.ico

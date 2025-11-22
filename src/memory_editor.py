@@ -31,6 +31,7 @@ class MemoryEditor:
         
         # Windows API functions
         self.kernel32 = ctypes.windll.kernel32
+        self.kernel32 = ctypes.windll.kernel32
         self.OpenProcess = self.kernel32.OpenProcess
         self.ReadProcessMemory = self.kernel32.ReadProcessMemory
         self.WriteProcessMemory = self.kernel32.WriteProcessMemory
