@@ -17,21 +17,21 @@ pyinstaller --onefile --windowed --name=EldenRingStutterFix --icon=assets/app_ic
 
 if exist "dist\EldenRingStutterFix.exe" (
     echo.
-    echo ✅ Build successful!
-    echo 📁 Executable created: dist\EldenRingStutterFix.exe
+    echo  Build successful!
+    echo  Executable created: dist\EldenRingStutterFix.exe
     echo.
-    echo 🚀 To run: Double-click the executable
-    echo ⚠️  IMPORTANT: Right-click and "Run as administrator" for full functionality
+    echo  To run: Double-click the executable
+    echo   IMPORTANT: Right-click and "Run as administrator" for full functionality
     echo.
     
     REM Create desktop shortcut
     echo Creating desktop shortcut...
     powershell "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%USERPROFILE%\Desktop\Elden Ring Stutter Fix.lnk'); $Shortcut.TargetPath = '%CD%\dist\EldenRingStutterFix.exe'; $Shortcut.Save()"
-    echo ✅ Desktop shortcut created!
+    echo  Desktop shortcut created!
     
 ) else (
     echo.
-    echo ❌ Build failed!
+    echo  Build failed!
     echo Check the error messages above.
 )
 
