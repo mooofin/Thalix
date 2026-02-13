@@ -1,0 +1,303 @@
+import { Button, CheckBox, ScrollView, StandardListView, LineEdit } from "std-widgets.slint";
+
+export struct ProcessEntry {
+    name: string,
+    pid: int,
+}
+
+export component MainWindow inherits Window {
+    title: "Thalix";
+    width: 1000px;
+    height: 800px;
+    background: #0f111a;
+    icon: @image-url("assets/icon.png");
+
+    in_out property <string> status_text: "Initializing...";
+    in_out property <[ProcessEntry]> process_list: [];
+    in_out property <string> game_path: "";
+    in_out property <[string]> mod_list: [];
+    in_out property <string> selected_mod: "";
+    property <int> selected_pid: -1;
+    
+    callback apply_affinity(int);
+    callback refresh_processes();
+    callback optimize_stutter();
+    callback reset_cores();
+    callback apply_mod(string, string);
+    callback restore_originals(string);
+
+    Rectangle {
+        Image {
+            source: @image-url("assets/bg.jpg");
+            width: 100%;
+            height: 100%;
+            image-fit: cover;
+            opacity: 0.15;
+        }
+
+        VerticalLayout {
+            padding: 25px;
+            spacing: 20px;
+
+            HorizontalLayout {
+                HorizontalLayout {
+                    spacing: 15px;
+                    Image {
+                        source: @image-url("assets/icon.png");
+                        width: 40px;
+                        height: 40px;
+                    }
+                    VerticalLayout {
+                        Text {
+                            text: "THALIX";
+                            font-size: 32px;
+                            color: #C9A96E;
+                            font-weight: 800;
+                            letter-spacing: 2px;
+                        }
+                        Text {
+                            text: "SYSTEM PERFORMANCE TOOLKIT";
+                            font-size: 11px;
+                            color: #A0A0A0;
+                            font-weight: 500;
+                        }
+                    }
+                }
+                Rectangle { }
+                Rectangle {
+                    background: #1e2132cc;
+                    border-radius: 6px;
+                    padding-left: 15px;
+                    padding-right: 15px;
+                    padding-top: 5px;
+                    padding-bottom: 5px;
+                    height: 35px;
+                    Text {
+                        text: status_text;
+                        color: #C9A96E;
+                        font-size: 13px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 25px;
+
+                Rectangle {
+                    background: #1e2132cc;
+                    border-radius: 12px;
+                    width: 300px;
+                    
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 15px;
+
+                        HorizontalLayout {
+                            Text {
+                                text: "PROCESSES";
+                                font-size: 16px;
+                                color: #C9A96E;
+                                font-weight: 700;
+                            }
+                            Rectangle { }
+                            Button {
+                                text: "↻";
+                                width: 30px;
+                                clicked => { refresh_processes() }
+                            }
+                        }
+
+                        Rectangle {
+                            background: #0f111aaa;
+                            border-radius: 6px;
+                            border-width: 1px;
+                            border-color: #2d2d2d;
+                            
+                            ScrollView {
+                                VerticalLayout {
+                                    padding: 5px;
+                                    for entry in process_list : Rectangle {
+                                        height: 35px;
+                                        background: selected_pid == entry.pid ? #C9A96E1a : transparent;
+                                        border-radius: 4px;
+                                        
+                                        TouchArea {
+                                            clicked => { selected_pid = entry.pid }
+                                        }
+
+                                        HorizontalLayout {
+                                            padding-left: 10px;
+                                            padding-right: 10px;
+                                            spacing: 10px;
+                                            Text {
+                                                text: entry.name;
+                                                color: selected_pid == entry.pid ? #C9A96E : #E0E0E0;
+                                                vertical-alignment: center;
+                                                font-size: 13px;
+                                                overflow: elide;
+                                            }
+                                            Rectangle { }
+                                            Text {
+                                                text: "PID: " + entry.pid;
+                                                color: #666;
+                                                vertical-alignment: center;
+                                                font-size: 10px;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: 20px;
+                    Rectangle {
+                        background: #1e2132cc;
+                        border-radius: 12px;
+                        height: 300px;
+                        
+                        VerticalLayout {
+                            padding: 20px;
+                            spacing: 15px;
+
+                            Text {
+                                text: "CPU AFFINITY CONTROL";
+                                font-size: 16px;
+                                color: #C9A96E;
+                                font-weight: 700;
+                            }
+
+                            Rectangle {
+                                background: #0f111aaa;
+                                border-radius: 8px;
+                                padding: 20px;
+                                
+                                Text {
+                                    text: "Select a process and apply optimization presets below.\nExecution handled by a high-performance backend.";
+                                    color: #A0A0A0;
+                                    font-size: 12px;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            HorizontalLayout {
+                                spacing: 15px;
+                                Button {
+                                    text: "OPTIMIZE FOR STUTTER";
+                                    clicked => { optimize_stutter() }
+                                }
+                                Button {
+                                    text: "RESET ALL CORES";
+                                    clicked => { reset_cores() }
+                                }
+                            }
+
+                            Button {
+                                text: "APPLY AFFINITY TO PID: " + (selected_pid == -1 ? "NONE" : selected_pid);
+                                primary: true;
+                                height: 40px;
+                                enabled: selected_pid != -1;
+                                clicked => {
+                                    apply_affinity(selected_pid);
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        background: #1e2132cc;
+                        border-radius: 12px;
+                        
+                        VerticalLayout {
+                            padding: 20px;
+                            spacing: 15px;
+
+                            Text {
+                                text: "MOD MANAGEMENT";
+                                font-size: 16px;
+                                color: #C9A96E;
+                                font-weight: 700;
+                            }
+
+                            VerticalLayout {
+                                spacing: 10px;
+                                Text {
+                                    text: "Game Installation Path:";
+                                    color: #A0A0A0;
+                                    font-size: 11px;
+                                }
+                                LineEdit {
+                                    text: game_path;
+                                    placeholder-text: "Game root directory...";
+                                    edited(t) => { game_path = t }
+                                }
+                            }
+
+                            Rectangle { height: 1px; background: #2d2d2d; }
+
+                            Text {
+                                text: "Detected Mod Payload:";
+                                color: #A0A0A0;
+                                font-size: 11px;
+                            }
+
+                            Rectangle {
+                                background: #0f111aaa;
+                                border-radius: 6px;
+                                height: 80px;
+                                ScrollView {
+                                    VerticalLayout {
+                                        padding: 5px;
+                                        for entry in mod_list : Rectangle {
+                                            height: 25px;
+                                            background: selected_mod == entry ? #C9A96E1a : transparent;
+                                            border-radius: 3px;
+                                            TouchArea {
+                                                clicked => { selected_mod = entry }
+                                            }
+                                            Text {
+                                                text: entry;
+                                                color: selected_mod == entry ? #C9A96E : #E0E0E0;
+                                                font-size: 11px;
+                                                x: 5px;
+                                                vertical-alignment: center;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 15px;
+                                Button {
+                                    text: "APPLY MOD";
+                                    primary: true;
+                                    height: 35px;
+                                    enabled: game_path != "" && selected_mod != "";
+                                    clicked => { apply_mod(game_path, selected_mod) }
+                                }
+                                Button {
+                                    text: "RESTORE ORIGINALS";
+                                    height: 35px;
+                                    enabled: game_path != "";
+                                    clicked => { restore_originals(game_path) }
+                                }
+                            }
+                            
+                            Text {
+                                text: "Originals preserved as .original backups.";
+                                color: #666;
+                                font-size: 10px;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

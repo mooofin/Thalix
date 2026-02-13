@@ -1,80 +1,15 @@
-# Ignore everything by default
-*
+# Rust Build Artifacts
+target/
 
-# Allow specific files and directories
-!.gitignore
-!readme.md
-!requirements.txt
-!*.bat
-!memory_editor.py
-!PROJECT_STRUCTURE.md
+# Slint Generated Files
+*.slint-build
 
-# Allow src directory and Python files
-!src/
-!src/*.py
-!src/**/*.py
-!src/core/
-!src/core/*.py
-!src/gui/
-!src/gui/*.py
-!src/utils/
-!src/utils/*.py
+# Local Dependencies
+Cargo.lock
 
-# Allow tests directory
-!tests/
-!tests/*.py
-!tests/**/*.py
-
-# Ignore Python cache even in allowed directories
-src/__pycache__/
-**/__pycache__/
-
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.pyc
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-*.egg
-
-# PyInstaller
-*.spec
-
-# Environments
-venv/
-env/
-ENV/
-
-# IDE
-.vscode/
+# IDE folders
 .idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
+.vscode/
 
 # Logs
 *.log
-thalix.log
-logs/
-!logs/.gitkeep
-
-# Temporary files
-temp_icon.ico
-*.tmp
-
-# User-specific files (cheat tables from users)
-# Note: Keep example presets but ignore user downloads
-Downloads/
-*.CT
-
-# Test files
-test_*.py
-*_test.py

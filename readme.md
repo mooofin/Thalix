@@ -15,8 +15,8 @@ Thalix isolates game processes to dedicated CPU cores, away from system interrup
 
 ## Features
 Can fight Radhan without getting frame nuked
+- Supports 2 mods now
 
 ## Usage
 ugh check releases ?
 
-Requires Python 3.8+ with CustomTkinter, psutil, and Pillow.
