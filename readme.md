@@ -1,22 +1,29 @@
-# Thalix A high-performance process management and memory editing toolkit for eliminating game stuttering.
-<img width="1886" height="1009" alt="image" src="https://github.com/user-attachments/assets/56013854-56c8-4c98-ba0b-26fa077641c3" />
-<img width="1884" height="1004" alt="image" src="https://github.com/user-attachments/assets/e948a7ab-5466-4127-80a4-f89e9d3a8b18" />
+# Thalix
+![Thalix Banner](./ui/assets/readme-banner.jpg)
 
-## what the fuck  is DPC Latency ??
-DPC (Deferred Procedure Call) latency occurs when kernel routines take too long to execute, causing visible micro-stutters in games. When a game's rendering thread runs on Core 0 alongside high-priority system processes, DPC spikes starve the thread of CPU time even brief pauses of microseconds cause noticeable frame-time spikes.
+### Before Thalix
+![Before Thalix](./ui/assets/before-thalix.jpg)
 
-**Common causes:** (so far)
+### After Thalix
+![After Thalix](./ui/assets/after-thalix.jpg)
 
-- Inefficient device drivers
-- Excessive I/O activity
-- Conflicts with high-priority processes
+Thalix is a high-performance process isolation and mod management engine designed to eliminate micro-stuttering in latency-sensitive applications. It provides a toolkit for hard-locking execution threads to physical cores and managing non-destructive folder-level game modifications through an atomic, safety-first deployment framework.
 
-Thalix isolates game processes to dedicated CPU cores, away from system interrupts and DPC activity. This technique, a staple of real-time computing, ensures consistent frame times by preventing thread starvation.
+DPC (Deferred Procedure Call) latency is the primary bottleneck where kernel-mode routines (like I/O or driver interrupts) defer execution and inadvertently starve application threads of CPU cycles. Thalix mitigates this by isolating processes away from Core 0 and mapping them onto physical core masks, utilizing direct system calls to ensure execution priority and consistent frame pacing.
 
-## Features
-Can fight Radhan without getting frame nuked
-- Supports 2 mods now
+The mod management system employs a non-destructive state swapping mechanism to facilitate Quality of Life enhancements like the Better Bonfire Menu and DSR Easy Mode. Before any payload is applied, the engine renames original folders to `.original` backups, ensuring the vanilla state is preserved and allowing for one-click restoration.
 
-## Usage
-ugh check releases ?
+## Further Reading
+- [LatencyMon: Real-time latency checker](https://www.resplendence.com/latencymon)
+- [Solving DPC Latency Issues](https://www.sweetwater.com/sweetcare/articles/solving-dpc-latency-issues/)
+- [Driver 516.94 Audio/DPC Issues](https://forums.developer.nvidia.com/t/driver-version-516-94-introduces-high-dpc-latency-and-serious-audio-problems/238290)
+- [Understanding DPCs in Windows](https://medium.com/@WaterBucket/understanding-deferred-procedure-calls-dpcs-in-windows-ecd138292883)
+- [DPC Prioritization Theory](https://flylib.com/books/en/2.14.1.26/1/?)
+- [Microsoft: Introduction to DPC Objects](https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/introduction-to-dpc-objects)
+- [Wikipedia: Deferred Procedure Call](https://en.wikipedia.org/wiki/Deferred_Procedure_Call)
 
+## Build
+```bash
+cargo build --release
+./target/release/thalix-rust.exe
+```
